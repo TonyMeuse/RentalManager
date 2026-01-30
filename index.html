@@ -384,15 +384,76 @@
             border-bottom: none;
         }
 
-        /* Mobile table adjustments */
+        /* Mobile Card Layout - Replaces tables on small screens */
         @media (max-width: 768px) {
-            th, td {
-                padding: 12px 8px;
-                font-size: 13px;
+            .table-wrapper {
+                overflow-x: visible;
             }
             
             table {
-                min-width: 500px;
+                min-width: 100%;
+                display: block;
+            }
+            
+            thead {
+                display: none; /* Hide table headers on mobile */
+            }
+            
+            tbody {
+                display: block;
+            }
+            
+            tr {
+                display: block;
+                margin-bottom: 15px;
+                border: 2px solid #e0e0e0;
+                border-radius: 12px;
+                padding: 15px;
+                background: white;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            
+            tr:hover {
+                background: white;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            
+            td {
+                display: block;
+                text-align: left;
+                padding: 8px 0;
+                border: none;
+                font-size: 15px;
+            }
+            
+            td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: #4CAF50;
+                display: block;
+                margin-bottom: 5px;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            
+            td.actions {
+                padding-top: 15px;
+                margin-top: 10px;
+                border-top: 1px solid #e0e0e0;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            td.actions::before {
+                display: none;
+            }
+            
+            .actions button {
+                flex: 1;
+                min-width: calc(50% - 4px);
+                margin: 0;
             }
         }
 
@@ -751,7 +812,7 @@
         // ===========================================
         
         const firebaseConfig = {
-            apiKey: "AIzaSyAcMmb" + "oeVt7qD6wBv_" + "5vEgR6vAEme4dW3M",
+            apiKey: "AIzaSyAcMmboeVt7qD6wBv_5vEgR6vAEme4dW3M",
             authDomain: "rental-manager-8b713.firebaseapp.com",
             projectId: "rental-manager-8b713",
             storageBucket: "rental-manager-8b713.firebasestorage.app",
@@ -1245,8 +1306,8 @@
             equipmentList.forEach(equipment => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><strong>${equipment.name}</strong></td>
-                    <td>$${equipment.price.toFixed(2)}</td>
+                    <td data-label="Equipment Name"><strong>${equipment.name}</strong></td>
+                    <td data-label="Price/Day">$${equipment.price.toFixed(2)}</td>
                     <td class="actions">
                         <button class="btn-secondary" onclick="editEquipment('${equipment.id}')">✏️ Edit</button>
                         <button class="btn-danger" onclick="deleteEquipment('${equipment.id}')">🗑️ Delete</button>
@@ -1396,11 +1457,11 @@
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><strong>${rental.customerName}</strong></td>
-                    <td>${equipment ? equipment.name : '<em>Deleted</em>'}</td>
-                    <td>${rental.days}</td>
-                    <td>${formattedDate}</td>
-                    <td><strong>$${totalCost}</strong></td>
+                    <td data-label="Customer"><strong>${rental.customerName}</strong></td>
+                    <td data-label="Equipment">${equipment ? equipment.name : '<em>Deleted</em>'}</td>
+                    <td data-label="Days">${rental.days}</td>
+                    <td data-label="Date">${formattedDate}</td>
+                    <td data-label="Total"><strong>$${totalCost}</strong></td>
                     <td class="actions">
                         <button class="btn-secondary" onclick="editRental('${rental.id}')">✏️ Edit</button>
                         <button class="btn-success" onclick="markPaid('${rental.id}')">✓ Mark Paid</button>
@@ -1536,11 +1597,11 @@
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><strong>${rental.customerName}</strong></td>
-                    <td>${equipment ? equipment.name : '<em>Deleted</em>'}</td>
-                    <td>${rental.days}</td>
-                    <td>${formattedDate}</td>
-                    <td><strong>$${totalCost}</strong></td>
+                    <td data-label="Customer"><strong>${rental.customerName}</strong></td>
+                    <td data-label="Equipment">${equipment ? equipment.name : '<em>Deleted</em>'}</td>
+                    <td data-label="Days">${rental.days}</td>
+                    <td data-label="Date">${formattedDate}</td>
+                    <td data-label="Total"><strong>$${totalCost}</strong></td>
                     <td class="actions">
                         <button class="btn-secondary" onclick="editFutureRental('${rental.id}')">✏️ Edit</button>
                         <button class="btn-danger" onclick="deleteFutureRental('${rental.id}')">🗑️ Delete</button>
@@ -1587,11 +1648,11 @@
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${rental.customerName}</td>
-                    <td>${equipment ? equipment.name : 'Deleted'}</td>
-                    <td>${rental.days}</td>
-                    <td>${formattedDate}</td>
-                    <td>$${totalCost.toFixed(2)}<br><span class="${paidClass}">${paidStatus}</span></td>
+                    <td data-label="Customer"><strong>${rental.customerName}</strong></td>
+                    <td data-label="Equipment">${equipment ? equipment.name : '<em>Deleted</em>'}</td>
+                    <td data-label="Days">${rental.days}</td>
+                    <td data-label="Date">${formattedDate}</td>
+                    <td data-label="Total & Status">$${totalCost.toFixed(2)}<br><span class="${paidClass}">${paidStatus}</span></td>
                     <td class="actions">
                         <button class="btn-warning" onclick="openInfoMenu('${selectedMonth}', ${index})">💰 Payment</button>
                         <button class="btn-danger" onclick="removePastRental('${selectedMonth}', ${index})">🗑️ Remove</button>
