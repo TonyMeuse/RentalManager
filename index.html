@@ -1084,6 +1084,104 @@
             }
         }
 
+        /* Info Menu Modal */
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        #overlay.active {
+            display: block;
+        }
+
+        #infoMenu, #availabilityModal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+
+        #infoMenu.active, #availabilityModal.active {
+            display: block;
+        }
+
+        #availabilityModal h3 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .availability-calendar {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .availability-calendar .calendar-day.booked {
+            background: #ffebee;
+            color: #999;
+            cursor: not-allowed;
+            border-color: #ffcdd2;
+        }
+
+        .availability-calendar .calendar-day.booked:hover {
+            background: #ffebee;
+            transform: none;
+        }
+
+        .availability-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .availability-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .availability-legend-box {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .availability-legend-box.available {
+            background: white;
+        }
+
+        .availability-legend-box.booked {
+            background: #ffebee;
+            border-color: #ffcdd2;
+        }
+
+        @media (max-width: 768px) {
+            #infoMenu, #availabilityModal {
+                padding: 20px;
+                max-height: 80%;
+            }
+        }
+
         /* Link styling */
         a {
             color: #2196F3;
@@ -1331,12 +1429,36 @@
     </div>
 
     <!-- Info Menu Modal -->
-    <div id="overlay" onclick="closeInfoMenu()"></div>
+    <div id="overlay" onclick="closeModals()"></div>
     <div id="infoMenu">
         <h3>Payment Status</h3>
         <p id="paymentInfo" style="margin-bottom: 15px; text-align: center;"></p>
         <button id="customerPaid" class="btn-success" onclick="toggleCustomerPaid()">Mark as Paid</button>
         <button class="btn-danger" onclick="closeInfoMenu()">Close</button>
+    </div>
+
+    <!-- Availability Modal -->
+    <div id="availabilityModal">
+        <h3 id="availabilityTitle">Equipment Availability</h3>
+        <div class="availability-calendar">
+            <div class="calendar-header">
+                <button onclick="changeAvailabilityMonth(-1)">←</button>
+                <h3 id="availabilityMonthYear"></h3>
+                <button onclick="changeAvailabilityMonth(1)">→</button>
+            </div>
+            <div class="calendar-grid" id="availabilityCalendarGrid"></div>
+            <div class="availability-legend">
+                <div class="availability-legend-item">
+                    <div class="availability-legend-box available"></div>
+                    <span>Available</span>
+                </div>
+                <div class="availability-legend-item">
+                    <div class="availability-legend-box booked"></div>
+                    <span>Booked</span>
+                </div>
+            </div>
+        </div>
+        <button class="btn-danger" onclick="closeAvailabilityModal()" style="width: 100%; margin-top: 20px;">Close</button>
     </div>
 
     <!-- Sync Status Indicator -->
@@ -1935,6 +2057,7 @@
                     <td data-label="Equipment Name"><strong>${equipment.name}</strong></td>
                     <td data-label="Price/Day">$${equipment.price.toFixed(2)}</td>
                     <td class="actions">
+                        <button class="btn-primary" onclick="showAvailability('${equipment.id}', '${equipment.name.replace(/'/g, "\\'")}')">📅 Availability</button>
                         <button class="btn-secondary" onclick="editEquipment('${equipment.id}')">✏️ Edit</button>
                         <button class="btn-danger" onclick="deleteEquipment('${equipment.id}')">🗑️ Delete</button>
                     </td>
@@ -2724,6 +2847,116 @@
                 `;
                 tbody.appendChild(row);
             });
+        }
+
+        // ===========================================
+        // EQUIPMENT AVAILABILITY CALENDAR
+        // ===========================================
+        
+        let currentAvailabilityDate = new Date();
+        let currentEquipmentId = null;
+
+        function showAvailability(equipmentId, equipmentName) {
+            currentEquipmentId = equipmentId;
+            currentAvailabilityDate = new Date();
+            
+            document.getElementById('availabilityTitle').textContent = `${equipmentName} - Availability`;
+            document.getElementById('availabilityModal').classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+            
+            renderAvailabilityCalendar();
+        }
+
+        function closeAvailabilityModal() {
+            document.getElementById('availabilityModal').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+        function closeModals() {
+            closeInfoMenu();
+            closeAvailabilityModal();
+        }
+
+        function changeAvailabilityMonth(direction) {
+            currentAvailabilityDate.setMonth(currentAvailabilityDate.getMonth() + direction);
+            renderAvailabilityCalendar();
+        }
+
+        function renderAvailabilityCalendar() {
+            const year = currentAvailabilityDate.getFullYear();
+            const month = currentAvailabilityDate.getMonth();
+            
+            // Update header
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                                'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('availabilityMonthYear').textContent = `${monthNames[month]} ${year}`;
+            
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            // Get today's date for highlighting
+            const today = new Date();
+            const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+            const todayDate = today.getDate();
+            
+            // Get all bookings for this equipment
+            const equipmentBookings = futureRentals.filter(rental => rental.equipmentId === currentEquipmentId);
+            
+            // Create a Set of all booked dates (YYYY-MM-DD format)
+            const bookedDates = new Set();
+            equipmentBookings.forEach(booking => {
+                const startDate = new Date(booking.date);
+                const days = booking.days;
+                
+                // Add all days in the booking range
+                for (let i = 0; i < days; i++) {
+                    const currentDate = new Date(startDate);
+                    currentDate.setDate(startDate.getDate() + i);
+                    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+                    bookedDates.add(dateStr);
+                }
+            });
+            
+            // Build calendar grid
+            const grid = document.getElementById('availabilityCalendarGrid');
+            grid.innerHTML = '';
+            
+            // Add day headers
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayNames.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+            
+            // Add empty cells before first day
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty';
+                grid.appendChild(emptyDay);
+            }
+            
+            // Add day cells
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day';
+                dayCell.textContent = day;
+                
+                // Highlight today
+                if (isCurrentMonth && day === todayDate) {
+                    dayCell.classList.add('today');
+                }
+                
+                // Check if this date is booked
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                if (bookedDates.has(dateStr)) {
+                    dayCell.classList.add('booked');
+                }
+                
+                grid.appendChild(dayCell);
+            }
         }
 
         // INITIALIZE
