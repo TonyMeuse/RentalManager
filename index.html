@@ -1297,10 +1297,15 @@
                         </div>
                         
                         <div class="summary-row">
-                            <span class="summary-label">Paid Pot:</span>
+                            <span class="summary-label">Total Paid:</span>
+                            <span class="summary-value" id="totalPaid">$0.00</span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span class="summary-label">Add Payment:</span>
                             <div class="paid-pot-input">
                                 <span style="font-size: 1.4em; font-weight: 700; margin-right: 5px;">$</span>
-                                <input type="number" id="paidPotInput" placeholder="0.00" min="0" step="0.01" onchange="calculateRemaining()">
+                                <input type="number" id="paidPotInput" placeholder="0.00" min="0" step="0.01">
                                 <button class="btn-primary" onclick="savePaidPot()">💾 Save</button>
                             </div>
                         </div>
@@ -1599,7 +1604,6 @@
                     if (paidPotDoc.exists) {
                         const amount = paidPotDoc.data().amount || 0;
                         window.currentPaidPot = amount;
-                        document.getElementById('paidPotInput').value = amount.toFixed(2);
                     } else {
                         window.currentPaidPot = 0;
                     }
@@ -1720,11 +1724,11 @@
                     if (doc.exists) {
                         const amount = doc.data().amount || 0;
                         window.currentPaidPot = amount;
-                        document.getElementById('paidPotInput').value = amount.toFixed(2);
+                        document.getElementById('totalPaid').textContent = `$${amount.toFixed(2)}`;
                         calculateRemaining();
                     } else {
                         window.currentPaidPot = 0;
-                        document.getElementById('paidPotInput').value = '';
+                        document.getElementById('totalPaid').textContent = '$0.00';
                         calculateRemaining();
                     }
                 })
@@ -2346,6 +2350,7 @@
             
             // Update display
             document.getElementById('totalCollected').textContent = `$${totalCollected.toFixed(2)}`;
+            document.getElementById('totalPaid').textContent = `$${(window.currentPaidPot || 0).toFixed(2)}`;
             window.currentTotalCollected = totalCollected;
             
             // Calculate remaining
@@ -2354,8 +2359,8 @@
 
         function calculateRemaining() {
             const totalCollected = window.currentTotalCollected || 0;
-            const paidPot = parseFloat(document.getElementById('paidPotInput').value) || 0;
-            const remaining = totalCollected - paidPot;
+            const totalPaid = window.currentPaidPot || 0;
+            const remaining = totalCollected - totalPaid;
             
             const balanceElement = document.getElementById('remainingBalance');
             balanceElement.textContent = `$${remaining.toFixed(2)}`;
@@ -2366,20 +2371,24 @@
         }
 
         function savePaidPot() {
-            const paidPot = parseFloat(document.getElementById('paidPotInput').value) || 0;
-            const totalCollected = window.currentTotalCollected || 0;
-            const remaining = totalCollected - paidPot;
+            const newPayment = parseFloat(document.getElementById('paidPotInput').value) || 0;
             
-            if (paidPot < 0) {
-                alert('Amount cannot be negative');
+            if (newPayment <= 0) {
+                alert('Please enter an amount greater than 0');
                 return;
             }
+            
+            const currentPaidPot = window.currentPaidPot || 0;
+            const newTotal = currentPaidPot + newPayment;
+            
+            const totalCollected = window.currentTotalCollected || 0;
+            const remaining = totalCollected - newTotal;
             
             updateSyncStatus('syncing');
             
             // If remaining is zero or negative, reset everything
             if (remaining <= 0) {
-                if (!confirm('Balance will be settled! This will reset Total Collected to $0. Continue?')) {
+                if (!confirm(`This will settle the balance! Total Collected will reset to $0. Add $${newPayment.toFixed(2)}?`)) {
                     updateSyncStatus('synced');
                     return;
                 }
@@ -2406,12 +2415,18 @@
                         updateSyncStatus('error');
                     });
             } else {
-                // Save normally
-                db.collection('settings').doc('paidPot').set({ amount: paidPot })
+                // Save the new cumulative total
+                db.collection('settings').doc('paidPot').set({ amount: newTotal })
                     .then(() => {
                         updateSyncStatus('synced');
-                        showAlert('✅ Saved!');
-                        window.currentPaidPot = paidPot;
+                        showAlert(`✅ Added $${newPayment.toFixed(2)}!`);
+                        // Clear input field
+                        document.getElementById('paidPotInput').value = '';
+                        // Update local state
+                        window.currentPaidPot = newTotal;
+                        // Update display
+                        document.getElementById('totalPaid').textContent = `$${newTotal.toFixed(2)}`;
+                        calculateRemaining();
                     })
                     .catch(error => {
                         console.error('Error saving:', error);
