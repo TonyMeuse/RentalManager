@@ -1830,11 +1830,9 @@
                                 equipmentList[index] = data;
                             } else {
                                 equipmentList.push(data);
-                                showAlert('Equipment updated by partner');
                             }
                         } else if (change.type === 'removed') {
                             equipmentList = equipmentList.filter(e => e.id !== change.doc.id);
-                            showAlert('Equipment removed by partner');
                         }
                     });
                     renderEquipmentTable();
@@ -1857,7 +1855,6 @@
                             }
                         } else if (change.type === 'removed') {
                             rentalList = rentalList.filter(r => r.id !== change.doc.id);
-                            showAlert('Rental updated by partner');
                         }
                     });
                     renderRentalTable();
