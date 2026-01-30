@@ -2359,6 +2359,8 @@
 
         function savePaidPot() {
             const paidPot = parseFloat(document.getElementById('paidPotInput').value) || 0;
+            const totalCollected = window.currentTotalCollected || 0;
+            const remaining = totalCollected - paidPot;
             
             if (paidPot < 0) {
                 alert('Paid Pot cannot be negative');
@@ -2367,17 +2369,49 @@
             
             updateSyncStatus('syncing');
             
-            // Save paidPot to settings collection
-            db.collection('settings').doc('paidPot').set({ amount: paidPot })
-                .then(() => {
+            // If balance reaches zero or below, reset everything
+            if (remaining <= 0) {
+                if (!confirm('Balance is settled! This will reset Total Collected and Paid Pot to $0. Continue?')) {
                     updateSyncStatus('synced');
-                    showAlert('Paid Pot saved successfully!');
-                })
-                .catch(error => {
-                    console.error('Error saving paid pot:', error);
-                    alert('Error saving paid pot');
-                    updateSyncStatus('error');
-                });
+                    return;
+                }
+                
+                // Delete all past rentals (all months)
+                const deletePromises = [];
+                for (const month in pastRentals) {
+                    deletePromises.push(db.collection('pastRentals').doc(month).delete());
+                }
+                
+                // Reset paid pot to zero
+                deletePromises.push(db.collection('settings').doc('paidPot').set({ amount: 0 }));
+                
+                Promise.all(deletePromises)
+                    .then(() => {
+                        updateSyncStatus('synced');
+                        showAlert('✅ Balance settled! Everything reset to $0');
+                        // Reset local display
+                        document.getElementById('paidPotInput').value = '0.00';
+                        pastRentals = {};
+                        renderPastRentals();
+                    })
+                    .catch(error => {
+                        console.error('Error resetting:', error);
+                        alert('Error resetting balance');
+                        updateSyncStatus('error');
+                    });
+            } else {
+                // Just save the paid pot normally
+                db.collection('settings').doc('paidPot').set({ amount: paidPot })
+                    .then(() => {
+                        updateSyncStatus('synced');
+                        showAlert('Paid Pot saved successfully!');
+                    })
+                    .catch(error => {
+                        console.error('Error saving paid pot:', error);
+                        alert('Error saving paid pot');
+                        updateSyncStatus('error');
+                    });
+            }
         }
 
         function removePastRental(month, index) {
