@@ -2807,6 +2807,8 @@
         }
 
         function changeMonth(direction) {
+            // Set to first day of month to prevent overflow issues
+            currentCalendarDate.setDate(1);
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
             renderCalendar();
             document.getElementById('selectedDateBookings').innerHTML = '';
@@ -2943,6 +2945,9 @@
         }
 
         function changeAvailabilityMonth(direction) {
+            // Set to first day of month to prevent overflow issues
+            // (e.g., Jan 31 -> Feb 31 would overflow to Mar 3)
+            currentAvailabilityDate.setDate(1);
             currentAvailabilityDate.setMonth(currentAvailabilityDate.getMonth() + direction);
             renderAvailabilityCalendar();
         }
