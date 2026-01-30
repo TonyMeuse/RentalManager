@@ -27,6 +27,30 @@
             overflow-x: hidden;
             width: 100%;
             max-width: 100%;
+            position: relative;
+        }
+
+        body {
+            touch-action: pan-y pinch-zoom;
+        }
+
+        @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden !important;
+            }
+
+            .container, .section-container, #mainMenu, .table-wrapper, .calendar-container, .availability-calendar {
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+            }
+
+            * {
+                max-width: 100%;
+            }
+
+            table, tr, td, th {
+                max-width: 100% !important;
+            }
         }
 
         img, video, iframe {
@@ -307,6 +331,7 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             max-width: 800px;
+            width: 100%;
             margin: 40px auto;
             padding: 20px;
         }
@@ -396,6 +421,8 @@
         /* Section containers - FORCE HIDE/SHOW */
         .section-container {
             display: none !important;
+            max-width: 100%;
+            overflow-x: hidden;
         }
 
         .section-container.active {
@@ -450,6 +477,7 @@
         /* Calendar Styles */
         .calendar-container {
             max-width: 800px;
+            width: 100%;
             margin: 20px auto;
             background: white;
             padding: 20px;
@@ -489,11 +517,17 @@
             color: white;
         }
 
+        #availabilityMonthYear {
+            color: white !important;
+        }
+
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 5px;
             margin-bottom: 20px;
+            width: 100%;
+            max-width: 100%;
         }
 
         .calendar-day-header {
@@ -684,11 +718,14 @@
         @media (max-width: 768px) {
             .table-wrapper {
                 overflow-x: visible;
+                width: 100%;
             }
             
             table {
                 min-width: 100%;
+                max-width: 100%;
                 display: block;
+                overflow: hidden;
             }
             
             thead {
@@ -749,12 +786,15 @@
             .actions button {
                 flex: 1;
                 min-width: calc(50% - 4px);
+                max-width: 100%;
                 margin: 0;
+                white-space: normal;
+                word-wrap: break-word;
             }
         }
 
         .actions {
-            white-space: nowrap;
+            white-space: normal;
         }
 
         .actions button {
@@ -1138,14 +1178,19 @@
             display: block;
         }
 
-        #availabilityModal h3 {
+        #availabilityModal > h3 {
             color: #4CAF50;
             margin-bottom: 20px;
             text-align: center;
         }
 
+        #availabilityModal .calendar-header h3 {
+            color: white !important;
+        }
+
         .availability-calendar {
             max-width: 600px;
+            width: 100%;
             margin: 0 auto;
         }
 
@@ -1197,6 +1242,8 @@
             #infoMenu, #availabilityModal {
                 padding: 20px;
                 max-height: 80%;
+                width: 90%;
+                max-width: 90%;
             }
         }
 
