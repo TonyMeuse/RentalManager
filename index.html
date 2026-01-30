@@ -287,7 +287,6 @@
 
         /* Main Menu */
         #mainMenu {
-            display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             max-width: 800px;
@@ -377,14 +376,18 @@
             }
         }
 
-        /* Section containers */
+        /* Section containers - FORCE HIDE/SHOW */
         .section-container {
-            display: none;
-            animation: fadeIn 0.3s ease;
+            display: none !important;
         }
 
         .section-container.active {
-            display: block;
+            display: block !important;
+        }
+
+        /* Main menu needs grid layout when active */
+        #mainMenu.active {
+            display: grid !important;
         }
 
         @keyframes fadeIn {
@@ -1319,13 +1322,22 @@
         // ===========================================
         
         function showSection(sectionId) {
-            // Hide all sections
-            document.querySelectorAll('.section-container').forEach(section => {
-                section.classList.remove('active');
+            // Hide ALL sections by removing active class
+            const allSections = ['mainMenu', 'equipmentSection', 'futureBookingsSection', 'currentRentalsSection', 'pastRentalsSection'];
+            allSections.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.classList.remove('active');
+                    element.style.display = 'none';
+                }
             });
             
-            // Show the requested section
-            document.getElementById(sectionId).classList.add('active');
+            // Show ONLY the requested section
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                targetSection.style.display = 'block';
+            }
         }
 
         // ===========================================
