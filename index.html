@@ -156,29 +156,31 @@
 
         #logoutBtn {
             position: absolute;
-            top: 0;
-            right: 0;
-            padding: 10px 20px;
-            background: #f44336;
-            color: white;
+            top: 5px;
+            right: 5px;
+            padding: 5px 10px;
+            background: none;
+            color: #999;
             border: none;
-            border-radius: 10px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s;
+            font-size: 12px;
+            font-weight: 400;
+            transition: color 0.3s;
+            text-decoration: underline;
         }
 
         #logoutBtn:hover {
-            background: #da190b;
-            transform: translateY(-2px);
+            color: #f44336;
+            background: none;
+            transform: none;
         }
 
         @media (max-width: 768px) {
             #logoutBtn {
                 position: static;
-                width: 100%;
-                margin-top: 15px;
+                display: block;
+                margin: 10px auto 0;
+                text-align: center;
             }
         }
 
@@ -283,24 +285,105 @@
             box-shadow: 0 4px 12px rgba(139, 195, 74, 0.4);
         }
 
-        /* Navigation buttons */
-        .nav-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 25px;
-            justify-content: center;
+        /* Main Menu */
+        #mainMenu {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
         }
 
         @media (max-width: 768px) {
-            .nav-buttons {
-                flex-direction: column;
+            #mainMenu {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 10px;
             }
-            
-            .nav-buttons button {
+        }
+
+        .menu-tile {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            border-radius: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            border: none;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .menu-tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+
+        .menu-tile:active {
+            transform: translateY(-2px);
+        }
+
+        .menu-tile .icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        .menu-tile.green {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+
+        .menu-tile.blue {
+            background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);
+        }
+
+        .menu-tile.orange {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+        }
+
+        .menu-tile.purple {
+            background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+        }
+
+        /* Back Button */
+        .back-btn {
+            background: #666;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #555;
+            transform: translateX(-3px);
+        }
+
+        @media (max-width: 768px) {
+            .back-btn {
                 width: 100%;
-                margin: 5px 0;
+                justify-content: center;
             }
+        }
+
+        /* Section containers */
+        .section-container {
+            display: none;
+        }
+
+        .section-container.active {
+            display: block;
         }
 
         /* Forms */
@@ -680,16 +763,32 @@
             <header>
                 <h1>🔧 Rental Equipment Manager</h1>
                 <div class="user-info">Logged in as: <span id="currentUsername"></span></div>
-                <button id="logoutBtn" onclick="logout()">🚪 Logout</button>
+                <button id="logoutBtn" onclick="logout()">logout</button>
             </header>
 
-            <div class="nav-buttons">
-                <button class="btn-primary" id="editBtn" onclick="toggleSection('editSection')">⚙️ Manage Equipment</button>
-                <button class="btn-secondary" id="bookingsBtn" onclick="toggleSection('bookingsSection')">📅 Future Bookings</button>
+            <!-- Main Menu -->
+            <div id="mainMenu" class="section-container active">
+                <button class="menu-tile green" onclick="showSection('equipmentSection')">
+                    <span class="icon">⚙️</span>
+                    Manage Equipment
+                </button>
+                <button class="menu-tile blue" onclick="showSection('futureBookingsSection')">
+                    <span class="icon">📅</span>
+                    Future Bookings
+                </button>
+                <button class="menu-tile orange" onclick="showSection('currentRentalsSection')">
+                    <span class="icon">📋</span>
+                    Current Rentals
+                </button>
+                <button class="menu-tile purple" onclick="showSection('pastRentalsSection')">
+                    <span class="icon">💰</span>
+                    Past Rentals
+                </button>
             </div>
 
-            <!-- Edit Equipment Section -->
-            <div id="editSection" class="section-hidden">
+            <!-- Equipment Section -->
+            <div id="equipmentSection" class="section-container">
+                <button class="back-btn" onclick="showSection('mainMenu')">← Back to Menu</button>
                 <h2>⚙️ Manage Equipment</h2>
                 <form id="equipmentForm" onsubmit="addEquipment(event)">
                     <input type="text" id="equipmentName" placeholder="Equipment Name" required>
@@ -712,7 +811,8 @@
             </div>
 
             <!-- Future Bookings Section -->
-            <div id="bookingsSection" class="section-hidden">
+            <div id="futureBookingsSection" class="section-container">
+                <button class="back-btn" onclick="showSection('mainMenu')">← Back to Menu</button>
                 <h2>📅 Future Bookings</h2>
                 <form id="futureRentalForm" onsubmit="addFutureRental(event)">
                     <input type="text" id="futureCustomerName" placeholder="Customer Name" required>
@@ -742,54 +842,60 @@
             </div>
 
             <!-- Current Rentals Section -->
-            <h2>📋 Current Rentals</h2>
-            <form id="rentalForm" onsubmit="addRental(event)">
-                <input type="text" id="customerName" placeholder="Customer Name" required>
-                <select id="equipmentSelect" required>
-                    <option value="">Select Equipment</option>
-                </select>
-                <input type="number" id="rentalDays" placeholder="Rental Days" min="1" required>
-                <input type="date" id="rentalDate" required>
-                <button type="submit" class="btn-primary">➕ Add Rental</button>
-            </form>
-            
-            <div class="table-wrapper">
-                <table id="rentalTable">
-                    <thead>
-                        <tr>
-                            <th>Customer</th>
-                            <th>Equipment</th>
-                            <th>Days</th>
-                            <th>Date</th>
-                            <th>Cost ($)</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <div id="currentRentalsSection" class="section-container">
+                <button class="back-btn" onclick="showSection('mainMenu')">← Back to Menu</button>
+                <h2>📋 Current Rentals</h2>
+                <form id="rentalForm" onsubmit="addRental(event)">
+                    <input type="text" id="customerName" placeholder="Customer Name" required>
+                    <select id="equipmentSelect" required>
+                        <option value="">Select Equipment</option>
+                    </select>
+                    <input type="number" id="rentalDays" placeholder="Rental Days" min="1" required>
+                    <input type="date" id="rentalDate" required>
+                    <button type="submit" class="btn-primary">➕ Add Rental</button>
+                </form>
+                
+                <div class="table-wrapper">
+                    <table id="rentalTable">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Equipment</th>
+                                <th>Days</th>
+                                <th>Date</th>
+                                <th>Cost ($)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Past Rentals Section -->
-            <h2>📊 Past Rentals</h2>
-            <div id="pastRentalsFilter">
-                <select id="monthSelect" onchange="renderPastRentals()">
-                    <option value="">Select Month</option>
-                </select>
-            </div>
-            <div class="table-wrapper">
-                <table id="pastRentalsTable">
-                    <thead>
-                        <tr>
-                            <th>Customer</th>
-                            <th>Equipment</th>
-                            <th>Days</th>
-                            <th>Date</th>
-                            <th>Cost ($)</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <div id="pastRentalsSection" class="section-container">
+                <button class="back-btn" onclick="showSection('mainMenu')">← Back to Menu</button>
+                <h2>💰 Past Rentals</h2>
+                <div id="pastRentalsFilter">
+                    <select id="monthSelect" onchange="renderPastRentals()">
+                        <option value="">Select Month</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table id="pastRentalsTable">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Equipment</th>
+                                <th>Days</th>
+                                <th>Date</th>
+                                <th>Cost ($)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -1196,20 +1302,24 @@
             }, 3000);
         }
 
-        function toggleSection(sectionId) {
-            const section = document.getElementById(sectionId);
-            const isHidden = section.classList.contains('section-hidden');
+        // ===========================================
+        // NAVIGATION
+        // ===========================================
+        
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section-container').forEach(section => {
+                section.classList.remove('active');
+            });
             
-            section.classList.toggle('section-hidden');
-            
-            // Update button text
-            if (sectionId === 'editSection') {
-                document.getElementById('editBtn').innerHTML = isHidden ? '✕ Close' : '⚙️ Manage Equipment';
-            } else if (sectionId === 'bookingsSection') {
-                document.getElementById('bookingsBtn').innerHTML = isHidden ? '✕ Close' : '📅 Future Bookings';
-            }
+            // Show the requested section
+            document.getElementById(sectionId).classList.add('active');
         }
 
+        // ===========================================
+        // RENDERING
+        // ===========================================
+        
         function renderAll() {
             renderEquipmentTable();
             renderRentalTable();
@@ -1271,9 +1381,8 @@
             document.getElementById('equipmentSubmitBtn').innerHTML = '💾 Update Equipment';
             editingEquipmentId = id;
             
-            // Show edit section
-            document.getElementById('editSection').classList.remove('section-hidden');
-            document.getElementById('editBtn').innerHTML = '✕ Close';
+            // Show equipment section
+            showSection('equipmentSection');
         }
 
         function deleteEquipment(id) {
@@ -1527,9 +1636,8 @@
             document.getElementById('futureRentalForm').querySelector('button').innerHTML = '💾 Update Booking';
             editingFutureRentalId = id;
             
-            // Show bookings section
-            document.getElementById('bookingsSection').classList.remove('section-hidden');
-            document.getElementById('bookingsBtn').innerHTML = '✕ Close';
+            // Show future bookings section
+            showSection('futureBookingsSection');
         }
 
         function deleteFutureRental(id) {
