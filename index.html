@@ -390,6 +390,176 @@
             display: grid !important;
         }
 
+        /* Submenu styling (same as main menu but slightly smaller) */
+        .submenu {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            max-width: 900px;
+            margin: 20px auto;
+        }
+
+        @media (max-width: 768px) {
+            .submenu {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .submenu-tile {
+            background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .submenu-tile:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        }
+
+        .submenu-tile .icon {
+            font-size: 36px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        /* Calendar Styles */
+        .calendar-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .calendar-header button {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .calendar-header button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .calendar-header h3 {
+            margin: 0;
+            font-size: 1.4em;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            padding: 10px;
+            font-weight: 700;
+            color: #4CAF50;
+            font-size: 14px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            position: relative;
+            background: white;
+        }
+
+        .calendar-day:hover {
+            background: #f0f0f0;
+            transform: scale(1.05);
+        }
+
+        .calendar-day.empty {
+            border: none;
+            cursor: default;
+        }
+
+        .calendar-day.empty:hover {
+            background: white;
+            transform: none;
+        }
+
+        .calendar-day.today {
+            background: #FFF3E0;
+            border-color: #FF9800;
+        }
+
+        .calendar-day.selected {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        .calendar-day.has-bookings::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            width: 6px;
+            height: 6px;
+            background: #2196F3;
+            border-radius: 50%;
+        }
+
+        .calendar-day.selected.has-bookings::after {
+            background: white;
+        }
+
+        .selected-date-bookings {
+            margin-top: 20px;
+        }
+
+        .selected-date-bookings h3 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-day {
+                font-size: 14px;
+            }
+            
+            .calendar-day-header {
+                font-size: 12px;
+                padding: 8px 4px;
+            }
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -825,10 +995,30 @@
                 </div>
             </div>
 
-            <!-- Future Bookings Section -->
+            <!-- Future Bookings Section - Submenu -->
             <div id="futureBookingsSection" class="section-container">
                 <button class="back-btn" onclick="showSection('mainMenu')">← Back to Menu</button>
                 <h2>📅 Future Bookings</h2>
+                <div class="submenu">
+                    <button class="submenu-tile" onclick="showSection('futureBookingsAddSection')">
+                        <span class="icon">➕</span>
+                        Add Bookings
+                    </button>
+                    <button class="submenu-tile" onclick="showSection('futureBookingsCalendarSection')">
+                        <span class="icon">📅</span>
+                        View Calendar
+                    </button>
+                    <button class="submenu-tile" onclick="showSection('futureBookingsTomorrowSection')">
+                        <span class="icon">⏰</span>
+                        Tomorrow's Bookings
+                    </button>
+                </div>
+            </div>
+
+            <!-- Future Bookings - Add Section -->
+            <div id="futureBookingsAddSection" class="section-container">
+                <button class="back-btn" onclick="showSection('futureBookingsSection')">← Back to Future Bookings</button>
+                <h2>➕ Add Booking</h2>
                 <form id="futureRentalForm" onsubmit="addFutureRental(event)">
                     <input type="text" id="futureCustomerName" placeholder="Customer Name" required>
                     <select id="futureEquipmentSelect" required>
@@ -838,15 +1028,34 @@
                     <input type="date" id="futureRentalDate" required>
                     <button type="submit" class="btn-primary">➕ Add Booking</button>
                 </form>
-                
+            </div>
+
+            <!-- Future Bookings - Calendar Section -->
+            <div id="futureBookingsCalendarSection" class="section-container">
+                <button class="back-btn" onclick="showSection('futureBookingsSection')">← Back to Future Bookings</button>
+                <h2>📅 View Calendar</h2>
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <button onclick="changeMonth(-1)">←</button>
+                        <h3 id="calendarMonthYear"></h3>
+                        <button onclick="changeMonth(1)">→</button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+                <div class="selected-date-bookings" id="selectedDateBookings"></div>
+            </div>
+
+            <!-- Future Bookings - Tomorrow Section -->
+            <div id="futureBookingsTomorrowSection" class="section-container">
+                <button class="back-btn" onclick="showSection('futureBookingsSection')">← Back to Future Bookings</button>
+                <h2>⏰ Tomorrow's Bookings</h2>
                 <div class="table-wrapper">
-                    <table id="futureRentalsTable">
+                    <table id="tomorrowBookingsTable">
                         <thead>
                             <tr>
                                 <th>Customer</th>
                                 <th>Equipment</th>
                                 <th>Days</th>
-                                <th>Date</th>
                                 <th>Cost ($)</th>
                                 <th>Actions</th>
                             </tr>
@@ -1323,7 +1532,16 @@
         
         function showSection(sectionId) {
             // Hide ALL sections by removing active class
-            const allSections = ['mainMenu', 'equipmentSection', 'futureBookingsSection', 'currentRentalsSection', 'pastRentalsSection'];
+            const allSections = [
+                'mainMenu', 
+                'equipmentSection', 
+                'futureBookingsSection',
+                'futureBookingsAddSection',
+                'futureBookingsCalendarSection',
+                'futureBookingsTomorrowSection',
+                'currentRentalsSection', 
+                'pastRentalsSection'
+            ];
             allSections.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
@@ -1337,6 +1555,21 @@
             if (targetSection) {
                 targetSection.classList.add('active');
                 targetSection.style.display = 'block';
+                
+                // Special handling for mainMenu to use grid layout
+                if (sectionId === 'mainMenu') {
+                    targetSection.style.display = 'grid';
+                }
+                
+                // Load calendar when opening calendar section
+                if (sectionId === 'futureBookingsCalendarSection') {
+                    renderCalendar();
+                }
+                
+                // Load tomorrow's bookings when opening that section
+                if (sectionId === 'futureBookingsTomorrowSection') {
+                    renderTomorrowBookings();
+                }
             }
         }
 
@@ -1660,8 +1893,8 @@
             document.getElementById('futureRentalForm').querySelector('button').innerHTML = '💾 Update Booking';
             editingFutureRentalId = id;
             
-            // Show future bookings section
-            showSection('futureBookingsSection');
+            // Show future bookings add section
+            showSection('futureBookingsAddSection');
         }
 
         function deleteFutureRental(id) {
@@ -1901,6 +2134,182 @@
                     alert('Error updating payment status');
                     updateSyncStatus('error');
                 });
+        }
+
+        // ===========================================
+        // CALENDAR FUNCTIONS
+        // ===========================================
+        
+        let currentCalendarDate = new Date();
+        let selectedDate = null;
+
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            
+            // Update header
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                                'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('calendarMonthYear').textContent = `${monthNames[month]} ${year}`;
+            
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            // Get today's date for highlighting
+            const today = new Date();
+            const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+            const todayDate = today.getDate();
+            
+            // Build calendar grid
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            
+            // Add day headers
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayNames.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+            
+            // Add empty cells before first day
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty';
+                grid.appendChild(emptyDay);
+            }
+            
+            // Add day cells
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day';
+                dayCell.textContent = day;
+                dayCell.onclick = () => selectDate(year, month, day);
+                
+                // Highlight today
+                if (isCurrentMonth && day === todayDate) {
+                    dayCell.classList.add('today');
+                }
+                
+                // Check if this date has bookings
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const hasBookings = futureRentals.some(rental => rental.date === dateStr);
+                if (hasBookings) {
+                    dayCell.classList.add('has-bookings');
+                }
+                
+                grid.appendChild(dayCell);
+            }
+        }
+
+        function changeMonth(direction) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
+            renderCalendar();
+            document.getElementById('selectedDateBookings').innerHTML = '';
+            selectedDate = null;
+        }
+
+        function selectDate(year, month, day) {
+            selectedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            // Update calendar UI
+            document.querySelectorAll('.calendar-day').forEach(cell => {
+                cell.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+            
+            // Show bookings for this date
+            const bookingsDiv = document.getElementById('selectedDateBookings');
+            const bookingsForDate = futureRentals.filter(rental => rental.date === selectedDate);
+            
+            if (bookingsForDate.length === 0) {
+                bookingsDiv.innerHTML = '<h3>No bookings for this date</h3>';
+            } else {
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                                    'July', 'August', 'September', 'October', 'November', 'December'];
+                bookingsDiv.innerHTML = `<h3>Bookings for ${monthNames[month]} ${day}, ${year}</h3>`;
+                
+                const table = document.createElement('div');
+                table.className = 'table-wrapper';
+                table.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Equipment</th>
+                                <th>Days</th>
+                                <th>Cost</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="selectedDateBookingsTable"></tbody>
+                    </table>
+                `;
+                bookingsDiv.appendChild(table);
+                
+                const tbody = document.getElementById('selectedDateBookingsTable');
+                bookingsForDate.forEach(rental => {
+                    const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+                    const totalCost = equipment ? (equipment.price * rental.days).toFixed(2) : 'N/A';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td data-label="Customer"><strong>${rental.customerName}</strong></td>
+                        <td data-label="Equipment">${equipment ? equipment.name : '<em>Deleted</em>'}</td>
+                        <td data-label="Days">${rental.days}</td>
+                        <td data-label="Cost"><strong>$${totalCost}</strong></td>
+                        <td class="actions">
+                            <button class="btn-secondary" onclick="editFutureRental('${rental.id}')">✏️ Edit</button>
+                            <button class="btn-danger" onclick="deleteFutureRental('${rental.id}')">🗑️ Delete</button>
+                            <button class="btn-success" onclick="confirmFutureRental('${rental.id}')">✓ Confirm</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        // ===========================================
+        // TOMORROW'S BOOKINGS
+        // ===========================================
+        
+        function renderTomorrowBookings() {
+            const tbody = document.querySelector('#tomorrowBookingsTable tbody');
+            tbody.innerHTML = '';
+            
+            // Get tomorrow's date
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+            
+            // Filter bookings for tomorrow
+            const tomorrowBookings = futureRentals.filter(rental => rental.date === tomorrowStr);
+            
+            if (tomorrowBookings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: #999;">No bookings for tomorrow</td></tr>';
+                return;
+            }
+            
+            tomorrowBookings.forEach(rental => {
+                const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+                const totalCost = equipment ? (equipment.price * rental.days).toFixed(2) : 'N/A';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td data-label="Customer"><strong>${rental.customerName}</strong></td>
+                    <td data-label="Equipment">${equipment ? equipment.name : '<em>Deleted</em>'}</td>
+                    <td data-label="Days">${rental.days}</td>
+                    <td data-label="Cost"><strong>$${totalCost}</strong></td>
+                    <td class="actions">
+                        <button class="btn-secondary" onclick="editFutureRental('${rental.id}')">✏️ Edit</button>
+                        <button class="btn-danger" onclick="deleteFutureRental('${rental.id}')">🗑️ Delete</button>
+                        <button class="btn-success" onclick="confirmFutureRental('${rental.id}')">✓ Confirm</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
         }
 
         // INITIALIZE
