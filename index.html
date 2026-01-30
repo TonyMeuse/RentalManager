@@ -959,7 +959,7 @@
                 </button>
                 <button class="menu-tile blue" onclick="showSection('futureBookingsSection')">
                     <span class="icon">📅</span>
-                    Future Bookings
+                    Bookings Manager
                 </button>
                 <button class="menu-tile orange" onclick="showSection('currentRentalsSection')">
                     <span class="icon">📋</span>
@@ -998,7 +998,7 @@
             <!-- Future Bookings Section - Submenu -->
             <div id="futureBookingsSection" class="section-container">
                 <button class="back-btn" onclick="showSection('mainMenu')">← Back to Menu</button>
-                <h2>📅 Future Bookings</h2>
+                <h2>📅 Bookings Manager</h2>
                 <div class="submenu">
                     <button class="submenu-tile" onclick="showSection('futureBookingsAddSection')">
                         <span class="icon">➕</span>
@@ -1017,7 +1017,7 @@
 
             <!-- Future Bookings - Add Section -->
             <div id="futureBookingsAddSection" class="section-container">
-                <button class="back-btn" onclick="showSection('futureBookingsSection')">← Back to Future Bookings</button>
+                <button class="back-btn" onclick="showSection('futureBookingsSection')">← Back to Bookings Manager</button>
                 <h2>➕ Add Booking</h2>
                 <form id="futureRentalForm" onsubmit="addFutureRental(event)">
                     <input type="text" id="futureCustomerName" placeholder="Customer Name" required>
@@ -1032,7 +1032,7 @@
 
             <!-- Future Bookings - Calendar Section -->
             <div id="futureBookingsCalendarSection" class="section-container">
-                <button class="back-btn" onclick="showSection('futureBookingsSection')">← Back to Future Bookings</button>
+                <button class="back-btn" onclick="showSection('futureBookingsSection')">← Back to Bookings Manager</button>
                 <h2>📅 View Calendar</h2>
                 <div class="calendar-container">
                     <div class="calendar-header">
@@ -1047,7 +1047,7 @@
 
             <!-- Future Bookings - Tomorrow Section -->
             <div id="futureBookingsTomorrowSection" class="section-container">
-                <button class="back-btn" onclick="showSection('futureBookingsSection')">← Back to Future Bookings</button>
+                <button class="back-btn" onclick="showSection('futureBookingsSection')">← Back to Bookings Manager</button>
                 <h2>⏰ Tomorrow's Bookings</h2>
                 <div class="table-wrapper">
                     <table id="tomorrowBookingsTable">
@@ -1478,6 +1478,11 @@
                     
                     if (calendarSection && calendarSection.classList.contains('active')) {
                         renderCalendar();
+                        // If a date is selected, refresh its bookings too
+                        if (selectedDate) {
+                            const [year, month, day] = selectedDate.split('-').map(Number);
+                            selectDate(year, month - 1, day);
+                        }
                     }
                     if (tomorrowSection && tomorrowSection.classList.contains('active')) {
                         renderTomorrowBookings();
