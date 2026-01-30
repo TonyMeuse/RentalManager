@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Rental Equipment Manager</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: rgba(76, 175, 80, 0.2);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                border-radius: 15px;
+            }
+        }
+
+        /* Login & Welcome Screens */
+        #loginScreen, #setupScreen, #welcomeScreen {
+            max-width: 400px;
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 768px) {
+            #loginScreen, #setupScreen, #welcomeScreen {
+                margin: 20px auto;
+                padding: 30px 20px;
+            }
+        }
+
+        #loginScreen h2, #setupScreen h2, #welcomeScreen h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.8em;
+        }
+
+        #loginScreen input, #setupScreen input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        #loginScreen input:focus, #setupScreen input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        #loginScreen button, #setupScreen button, #welcomeScreen button {
+            width: 100%;
+            padding: 15px;
+            margin: 15px 0 5px 0;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #loginScreen button:hover, #setupScreen button:hover, #welcomeScreen button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        #welcomeScreen button.btn-secondary {
+            background: #2196F3;
+        }
+
+        #welcomeScreen button.btn-secondary:hover {
+            background: #0b7dda;
+        }
+
+        #loginScreen .error, #setupScreen .error {
+            color: #f44336;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        #setupScreen p, #welcomeScreen p {
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        /* App Screen */
+        #appScreen {
+            display: none;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #4CAF50;
+            position: relative;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5em;
+            }
+        }
+
+        .user-info {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        #logoutBtn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 10px 20px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        #logoutBtn:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            #logoutBtn {
+                position: static;
+                width: 100%;
+                margin-top: 15px;
+            }
+        }
+
+        /* Alert notification */
+        #alertNotification {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            z-index: 10000;
+            animation: slideDown 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Button styles */
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin: 5px;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-secondary {
+            background: #2196F3;
+            color: white;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: #0b7dda;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+            box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+        }
+
+        .btn-warning {
+            background: #FF9800;
+            color: white;
+            box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-warning:hover {
+            background: #F57C00;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+        }
+
+        .btn-success {
+            background: #8BC34A;
+            color: white;
+            box-shadow: 0 2px 8px rgba(139, 195, 74, 0.3);
+        }
+
+        .btn-success:hover {
+            background: #7CB342;
+            box-shadow: 0 4px 12px rgba(139, 195, 74, 0.4);
+        }
+
+        /* Navigation buttons */
+        .nav-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .nav-buttons {
+                flex-direction: column;
+            }
+            
+            .nav-buttons button {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+
+        /* Forms */
+        form {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        input[type="text"], input[type="number"], input[type="date"], select {
+            padding: 12px;
+            margin: 8px 5px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border 0.3s;
+            background: white;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        /* Mobile responsive inputs */
+        @media (max-width: 768px) {
+            input[type="text"], input[type="number"], input[type="date"], select {
+                width: 100%;
+                margin: 8px 0;
+                display: block;
+            }
+            
+            form button {
+                width: 100%;
+                margin: 15px 0 5px 0;
+            }
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+            min-width: 600px;
+            background: white;
+        }
+
+        th, td {
+            padding: 15px 10px;
+            text-align: left;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        th {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Mobile table adjustments */
+        @media (max-width: 768px) {
+            th, td {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+            
+            table {
+                min-width: 500px;
+            }
+        }
+
+        .actions {
+            white-space: nowrap;
+        }
+
+        .actions button {
+            padding: 8px 14px;
+            margin: 3px;
+            font-size: 13px;
+        }
+
+        /* Section headers */
+        h2 {
+            margin-top: 35px;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.6em;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        h2::before {
+            content: '▶';
+            color: #4CAF50;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+
+        /* Hidden sections */
+        .section-hidden {
+            display: none;
+        }
+
+        /* Info menu modal */
+        #infoMenu {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: none;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+            z-index: 1000;
+            display: none;
+            max-height: 80vh;
+            overflow-y: auto;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        #infoMenu h3 {
+            margin-bottom: 20px;
+            color: #4CAF50;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        #infoMenu button {
+            display: block;
+            margin: 12px 0;
+            width: 100%;
+            text-align: center;
+            padding: 14px;
+        }
+
+        #infoMenu #paymentInfo {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            line-height: 1.8;
+        }
+
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(3px);
+            display: none;
+            z-index: 999;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Filter section */
+        #pastRentalsFilter {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+        }
+
+        #pastRentalsFilter select {
+            margin: 0;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        /* Sync status indicator */
+        .sync-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        .sync-status.syncing {
+            background: #FF9800;
+        }
+
+        .sync-status.error {
+            background: #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .sync-status {
+                bottom: 10px;
+                right: 10px;
+                font-size: 12px;
+                padding: 10px 15px;
+            }
+        }
+
+        /* Payment status badges */
+        .status-paid {
+            color: #4CAF50;
+            font-weight: 700;
+            font-size: 0.95em;
+        }
+
+        .status-unpaid {
+            color: #f44336;
+            font-weight: 700;
+            font-size: 0.95em;
+        }
+
+        /* Link styling */
+        a {
+            color: #2196F3;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        a:hover {
+            color: #0b7dda;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Alert Notification -->
+    <div id="alertNotification"></div>
+
+    <!-- Loading Spinner -->
+    <div class="spinner" id="loadingSpinner"></div>
+
+    <!-- Welcome Screen -->
+    <div id="welcomeScreen" style="display: none;">
+        <h2>🔧 Rental Equipment Manager</h2>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">Welcome! Choose an option:</p>
+        <button onclick="showSetupScreen()" style="margin-bottom: 15px;">Create Account</button>
+        <button onclick="showLoginScreen()" class="btn-secondary">Login to Existing Account</button>
+    </div>
+
+    <!-- Setup Screen (First Time Only) -->
+    <div id="setupScreen" style="display: none;">
+        <h2>🔧 Create Account</h2>
+        <p style="text-align: center; color: #666; margin-bottom: 20px;">Create login credentials (you and your partner will share these)</p>
+        <input type="text" id="setupUsername" placeholder="Choose a Username" autocomplete="off">
+        <input type="password" id="setupPassword" placeholder="Choose a Password" autocomplete="new-password">
+        <input type="password" id="setupPasswordConfirm" placeholder="Confirm Password" autocomplete="new-password">
+        <button onclick="completeSetup()">Create Account</button>
+        <div class="error" id="setupError"></div>
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="#" onclick="showWelcomeScreen(); return false;" style="font-size: 12px; color: #999; text-decoration: none;">← Back</a>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" style="display: none;">
+        <h2>🔧 Login</h2>
+        <input type="text" id="loginUsername" placeholder="Username" autocomplete="username">
+        <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+        <button onclick="login()">Login</button>
+        <div class="error" id="loginError"></div>
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="#" onclick="showWelcomeScreen(); return false;" style="font-size: 12px; color: #999; text-decoration: none;">← Back</a>
+        </div>
+    </div>
+
+    <!-- App Screen -->
+    <div id="appScreen">
+        <div class="container">
+            <header>
+                <h1>🔧 Rental Equipment Manager</h1>
+                <div class="user-info">Logged in as: <span id="currentUsername"></span></div>
+                <button id="logoutBtn" onclick="logout()">🚪 Logout</button>
+            </header>
+
+            <div class="nav-buttons">
+                <button class="btn-primary" id="editBtn" onclick="toggleSection('editSection')">⚙️ Manage Equipment</button>
+                <button class="btn-secondary" id="bookingsBtn" onclick="toggleSection('bookingsSection')">📅 Future Bookings</button>
+            </div>
+
+            <!-- Edit Equipment Section -->
+            <div id="editSection" class="section-hidden">
+                <h2>⚙️ Manage Equipment</h2>
+                <form id="equipmentForm" onsubmit="addEquipment(event)">
+                    <input type="text" id="equipmentName" placeholder="Equipment Name" required>
+                    <input type="number" id="rentalPrice" placeholder="Price per Day ($)" min="0" step="0.01" required>
+                    <button type="submit" class="btn-primary" id="equipmentSubmitBtn">➕ Add Equipment</button>
+                </form>
+                
+                <div class="table-wrapper">
+                    <table id="equipmentTable">
+                        <thead>
+                            <tr>
+                                <th>Equipment Name</th>
+                                <th>Price/Day ($)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Future Bookings Section -->
+            <div id="bookingsSection" class="section-hidden">
+                <h2>📅 Future Bookings</h2>
+                <form id="futureRentalForm" onsubmit="addFutureRental(event)">
+                    <input type="text" id="futureCustomerName" placeholder="Customer Name" required>
+                    <select id="futureEquipmentSelect" required>
+                        <option value="">Select Equipment</option>
+                    </select>
+                    <input type="number" id="futureRentalDays" placeholder="Rental Days" min="1" required>
+                    <input type="date" id="futureRentalDate" required>
+                    <button type="submit" class="btn-primary">➕ Add Booking</button>
+                </form>
+                
+                <div class="table-wrapper">
+                    <table id="futureRentalsTable">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Equipment</th>
+                                <th>Days</th>
+                                <th>Date</th>
+                                <th>Cost ($)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Current Rentals Section -->
+            <h2>📋 Current Rentals</h2>
+            <form id="rentalForm" onsubmit="addRental(event)">
+                <input type="text" id="customerName" placeholder="Customer Name" required>
+                <select id="equipmentSelect" required>
+                    <option value="">Select Equipment</option>
+                </select>
+                <input type="number" id="rentalDays" placeholder="Rental Days" min="1" required>
+                <input type="date" id="rentalDate" required>
+                <button type="submit" class="btn-primary">➕ Add Rental</button>
+            </form>
+            
+            <div class="table-wrapper">
+                <table id="rentalTable">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Equipment</th>
+                            <th>Days</th>
+                            <th>Date</th>
+                            <th>Cost ($)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Past Rentals Section -->
+            <h2>📊 Past Rentals</h2>
+            <div id="pastRentalsFilter">
+                <select id="monthSelect" onchange="renderPastRentals()">
+                    <option value="">Select Month</option>
+                </select>
+            </div>
+            <div class="table-wrapper">
+                <table id="pastRentalsTable">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Equipment</th>
+                            <th>Days</th>
+                            <th>Date</th>
+                            <th>Cost ($)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Menu Modal -->
+    <div id="overlay" onclick="closeInfoMenu()"></div>
+    <div id="infoMenu">
+        <h3>Payment Status</h3>
+        <p id="paymentInfo" style="margin-bottom: 15px; text-align: center;"></p>
+        <button id="customerPaid" class="btn-success" onclick="toggleCustomerPaid()">Mark as Paid</button>
+        <button class="btn-danger" onclick="closeInfoMenu()">Close</button>
+    </div>
+
+    <!-- Sync Status Indicator -->
+    <div class="sync-status" id="syncStatus">✓ Synced</div>
+
+    <script>
+        // ===========================================
+        // FIREBASE CONFIGURATION
+        // ===========================================
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyAcMmboeVt7qD6wBv_5vEgR6vAEme4dW3M",
+            authDomain: "rental-manager-8b713.firebaseapp.com",
+            projectId: "rental-manager-8b713",
+            storageBucket: "rental-manager-8b713.firebasestorage.app",
+            messagingSenderId: "808498759870",
+            appId: "1:808498759870:web:2a2ce6e921d6a4733836ef"
+        };
+
+        // Initialize Firebase
+        let app, db;
+        let isLoggedIn = false;
+        let unsubscribeListeners = [];
+        let storedCredentials = null;
+
+        try {
+            app = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            alert('Firebase configuration needed. Please set up Firebase first.');
+        }
+
+        // Check if already logged in (using localStorage so it persists)
+        window.addEventListener('load', () => {
+            const savedLogin = localStorage.getItem('isLoggedIn');
+            const savedUsername = localStorage.getItem('username');
+            
+            if (savedLogin === 'true' && savedUsername) {
+                // User is already logged in, load credentials and show app
+                showSpinner(true);
+                db.collection('settings').doc('credentials').get()
+                    .then(doc => {
+                        if (doc.exists) {
+                            storedCredentials = doc.data();
+                            showApp();
+                        } else {
+                            // Credentials were deleted, logout
+                            localStorage.removeItem('isLoggedIn');
+                            localStorage.removeItem('username');
+                            showWelcomeScreen();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading credentials:', error);
+                        showWelcomeScreen();
+                    })
+                    .finally(() => {
+                        showSpinner(false);
+                    });
+            } else {
+                // Not logged in, show welcome screen
+                showWelcomeScreen();
+            }
+        });
+
+        // Screen navigation functions
+        function showWelcomeScreen() {
+            document.getElementById('welcomeScreen').style.display = 'block';
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'none';
+        }
+
+        function showSetupScreen() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('setupScreen').style.display = 'block';
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'none';
+            document.getElementById('setupError').textContent = '';
+        }
+
+        function showLoginScreen() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('appScreen').style.display = 'none';
+            document.getElementById('loginError').textContent = '';
+        }
+
+        // ===========================================
+        // DATA STRUCTURES
+        // ===========================================
+        
+        let equipmentList = [];
+        let rentalList = [];
+        let futureRentals = [];
+        let pastRentals = {};
+        let currentRental = null;
+        let currentMonth = null;
+        let editingEquipmentId = null;
+        let editingRentalId = null;
+        let editingFutureRentalId = null;
+
+        // ===========================================
+        // AUTHENTICATION
+        // ===========================================
+        
+        function completeSetup() {
+            const username = document.getElementById('setupUsername').value.trim();
+            const password = document.getElementById('setupPassword').value;
+            const passwordConfirm = document.getElementById('setupPasswordConfirm').value;
+            const errorDiv = document.getElementById('setupError');
+            
+            // Validation
+            if (!username || !password || !passwordConfirm) {
+                errorDiv.textContent = 'Please fill in all fields';
+                return;
+            }
+
+            if (username.length < 3) {
+                errorDiv.textContent = 'Username must be at least 3 characters';
+                return;
+            }
+
+            if (password.length < 4) {
+                errorDiv.textContent = 'Password must be at least 4 characters';
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                errorDiv.textContent = 'Passwords do not match';
+                return;
+            }
+
+            // Save credentials to Firebase
+            showSpinner(true);
+            errorDiv.textContent = '';
+
+            db.collection('settings').doc('credentials').set({
+                username: username,
+                password: password
+            })
+            .then(() => {
+                showSpinner(false);
+                alert('Account created successfully! You can now login.');
+                storedCredentials = { username, password };
+                // Clear setup form
+                document.getElementById('setupUsername').value = '';
+                document.getElementById('setupPassword').value = '';
+                document.getElementById('setupPasswordConfirm').value = '';
+                // Show login screen
+                showLoginScreen();
+            })
+            .catch(error => {
+                console.error('Error saving credentials:', error);
+                errorDiv.textContent = 'Error saving credentials. Please try again.';
+                showSpinner(false);
+            });
+        }
+
+        function showApp() {
+            isLoggedIn = true;
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', storedCredentials.username);
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'block';
+            document.getElementById('currentUsername').textContent = storedCredentials.username;
+            loadDataFromFirebase();
+            setupRealtimeListeners();
+        }
+
+        function hideApp() {
+            isLoggedIn = false;
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('username');
+            document.getElementById('appScreen').style.display = 'none';
+            unsubscribeAllListeners();
+            showWelcomeScreen();
+        }
+
+        function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            if (!username || !password) {
+                errorDiv.textContent = 'Please enter username and password';
+                return;
+            }
+
+            // Check against stored credentials
+            if (!storedCredentials) {
+                // Load from Firebase first
+                showSpinner(true);
+                db.collection('settings').doc('credentials').get()
+                    .then(doc => {
+                        if (doc.exists) {
+                            storedCredentials = doc.data();
+                            validateLogin(username, password, errorDiv);
+                        } else {
+                            errorDiv.textContent = 'No account found. Please create an account first.';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading credentials:', error);
+                        errorDiv.textContent = 'Error loading credentials';
+                    })
+                    .finally(() => {
+                        showSpinner(false);
+                    });
+            } else {
+                validateLogin(username, password, errorDiv);
+            }
+        }
+
+        function validateLogin(username, password, errorDiv) {
+            if (username === storedCredentials.username && password === storedCredentials.password) {
+                errorDiv.textContent = '';
+                // Clear login form
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPassword').value = '';
+                showApp();
+            } else {
+                errorDiv.textContent = 'Invalid username or password';
+            }
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                hideApp();
+            }
+        }
+
+        // ===========================================
+        // FIREBASE DATA OPERATIONS
+        // ===========================================
+        
+        function loadDataFromFirebase() {
+            showSpinner(true);
+            updateSyncStatus('syncing');
+
+            const promises = [
+                db.collection('equipment').get(),
+                db.collection('rentals').get(),
+                db.collection('futureRentals').get(),
+                db.collection('pastRentals').get()
+            ];
+
+            Promise.all(promises)
+                .then(([equipmentSnapshot, rentalsSnapshot, futureSnapshot, pastSnapshot]) => {
+                    equipmentList = equipmentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    rentalList = rentalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    futureRentals = futureSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                    pastRentals = {};
+                    pastSnapshot.forEach(doc => {
+                        const month = doc.id;
+                        pastRentals[month] = doc.data().rentals || [];
+                    });
+
+                    renderAll();
+                    updateSyncStatus('synced');
+                })
+                .catch(error => {
+                    console.error('Error loading data:', error);
+                    updateSyncStatus('error');
+                    alert('Error loading data from server');
+                })
+                .finally(() => {
+                    showSpinner(false);
+                });
+        }
+
+        function setupRealtimeListeners() {
+            // Listen for equipment changes
+            unsubscribeListeners.push(
+                db.collection('equipment').onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added' || change.type === 'modified') {
+                            const data = { id: change.doc.id, ...change.doc.data() };
+                            const index = equipmentList.findIndex(e => e.id === data.id);
+                            if (index >= 0) {
+                                equipmentList[index] = data;
+                            } else {
+                                equipmentList.push(data);
+                                showAlert('Equipment updated by partner');
+                            }
+                        } else if (change.type === 'removed') {
+                            equipmentList = equipmentList.filter(e => e.id !== change.doc.id);
+                            showAlert('Equipment removed by partner');
+                        }
+                    });
+                    renderEquipmentTable();
+                    updateEquipmentSelect();
+                })
+            );
+
+            // Listen for rental changes
+            unsubscribeListeners.push(
+                db.collection('rentals').onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added' || change.type === 'modified') {
+                            const data = { id: change.doc.id, ...change.doc.data() };
+                            const index = rentalList.findIndex(r => r.id === data.id);
+                            if (index >= 0) {
+                                rentalList[index] = data;
+                            } else {
+                                rentalList.push(data);
+                                showAlert('New rental added by partner');
+                            }
+                        } else if (change.type === 'removed') {
+                            rentalList = rentalList.filter(r => r.id !== change.doc.id);
+                            showAlert('Rental updated by partner');
+                        }
+                    });
+                    renderRentalTable();
+                })
+            );
+
+            // Listen for future rentals changes
+            unsubscribeListeners.push(
+                db.collection('futureRentals').onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added' || change.type === 'modified') {
+                            const data = { id: change.doc.id, ...change.doc.data() };
+                            const index = futureRentals.findIndex(r => r.id === data.id);
+                            if (index >= 0) {
+                                futureRentals[index] = data;
+                            } else {
+                                futureRentals.push(data);
+                                showAlert('New booking added by partner');
+                            }
+                        } else if (change.type === 'removed') {
+                            futureRentals = futureRentals.filter(r => r.id !== change.doc.id);
+                        }
+                    });
+                    renderFutureRentalsTable();
+                })
+            );
+
+            // Listen for past rentals changes
+            unsubscribeListeners.push(
+                db.collection('pastRentals').onSnapshot(snapshot => {
+                    pastRentals = {};
+                    snapshot.forEach(doc => {
+                        pastRentals[doc.id] = doc.data().rentals || [];
+                    });
+                    updateMonthSelect();
+                    renderPastRentals();
+                })
+            );
+        }
+
+        function unsubscribeAllListeners() {
+            unsubscribeListeners.forEach(unsubscribe => unsubscribe());
+            unsubscribeListeners = [];
+        }
+
+        // ===========================================
+        // UI HELPER FUNCTIONS
+        // ===========================================
+        
+        function showSpinner(show) {
+            document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
+        }
+
+        function updateSyncStatus(status) {
+            const syncDiv = document.getElementById('syncStatus');
+            syncDiv.className = 'sync-status';
+            
+            if (status === 'syncing') {
+                syncDiv.textContent = '⟳ Syncing...';
+                syncDiv.classList.add('syncing');
+            } else if (status === 'error') {
+                syncDiv.textContent = '✕ Sync Error';
+                syncDiv.classList.add('error');
+            } else {
+                syncDiv.textContent = '✓ Synced';
+            }
+        }
+
+        function showAlert(message) {
+            const alertDiv = document.getElementById('alertNotification');
+            alertDiv.textContent = message;
+            alertDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const isHidden = section.classList.contains('section-hidden');
+            
+            section.classList.toggle('section-hidden');
+            
+            // Update button text
+            if (sectionId === 'editSection') {
+                document.getElementById('editBtn').innerHTML = isHidden ? '✕ Close' : '⚙️ Manage Equipment';
+            } else if (sectionId === 'bookingsSection') {
+                document.getElementById('bookingsBtn').innerHTML = isHidden ? '✕ Close' : '📅 Future Bookings';
+            }
+        }
+
+        function renderAll() {
+            renderEquipmentTable();
+            renderRentalTable();
+            renderFutureRentalsTable();
+            updateEquipmentSelect();
+            updateMonthSelect();
+            renderPastRentals();
+        }
+
+        // ===========================================
+        // EQUIPMENT MANAGEMENT
+        // ===========================================
+        
+        function addEquipment(event) {
+            event.preventDefault();
+            const name = document.getElementById('equipmentName').value.trim();
+            const price = parseFloat(document.getElementById('rentalPrice').value);
+            
+            if (!name || isNaN(price) || price < 0) {
+                alert('Please enter valid equipment name and price');
+                return;
+            }
+
+            updateSyncStatus('syncing');
+            
+            if (editingEquipmentId) {
+                // Update existing
+                db.collection('equipment').doc(editingEquipmentId).update({ name, price })
+                    .then(() => {
+                        resetEquipmentForm();
+                        updateSyncStatus('synced');
+                    })
+                    .catch(error => {
+                        console.error('Error updating equipment:', error);
+                        alert('Error updating equipment');
+                        updateSyncStatus('error');
+                    });
+            } else {
+                // Add new
+                db.collection('equipment').add({ name, price })
+                    .then(() => {
+                        resetEquipmentForm();
+                        updateSyncStatus('synced');
+                    })
+                    .catch(error => {
+                        console.error('Error adding equipment:', error);
+                        alert('Error adding equipment');
+                        updateSyncStatus('error');
+                    });
+            }
+        }
+
+        function editEquipment(id) {
+            const equipment = equipmentList.find(e => e.id === id);
+            if (!equipment) return;
+            
+            document.getElementById('equipmentName').value = equipment.name;
+            document.getElementById('rentalPrice').value = equipment.price;
+            document.getElementById('equipmentSubmitBtn').innerHTML = '💾 Update Equipment';
+            editingEquipmentId = id;
+            
+            // Show edit section
+            document.getElementById('editSection').classList.remove('section-hidden');
+            document.getElementById('editBtn').innerHTML = '✕ Close';
+        }
+
+        function deleteEquipment(id) {
+            if (!confirm('Delete this equipment?')) return;
+
+            updateSyncStatus('syncing');
+            
+            db.collection('equipment').doc(id).delete()
+                .then(() => {
+                    updateSyncStatus('synced');
+                })
+                .catch(error => {
+                    console.error('Error deleting equipment:', error);
+                    alert('Error deleting equipment');
+                    updateSyncStatus('error');
+                });
+        }
+
+        function resetEquipmentForm() {
+            document.getElementById('equipmentName').value = '';
+            document.getElementById('rentalPrice').value = '';
+            document.getElementById('equipmentSubmitBtn').innerHTML = '➕ Add Equipment';
+            editingEquipmentId = null;
+        }
+
+        function renderEquipmentTable() {
+            const tbody = document.querySelector('#equipmentTable tbody');
+            tbody.innerHTML = '';
+            
+            equipmentList.forEach(equipment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${equipment.name}</strong></td>
+                    <td>$${equipment.price.toFixed(2)}</td>
+                    <td class="actions">
+                        <button class="btn-secondary" onclick="editEquipment('${equipment.id}')">✏️ Edit</button>
+                        <button class="btn-danger" onclick="deleteEquipment('${equipment.id}')">🗑️ Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateEquipmentSelect() {
+            const selects = [
+                document.getElementById('equipmentSelect'),
+                document.getElementById('futureEquipmentSelect')
+            ];
+            
+            selects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">Select Equipment</option>';
+                
+                equipmentList.forEach(equipment => {
+                    const option = document.createElement('option');
+                    option.value = equipment.id;
+                    option.textContent = equipment.name;
+                    select.appendChild(option);
+                });
+                
+                select.value = currentValue;
+            });
+        }
+
+        // ===========================================
+        // CURRENT RENTALS MANAGEMENT
+        // ===========================================
+        
+        function addRental(event) {
+            event.preventDefault();
+            const customerName = document.getElementById('customerName').value.trim();
+            const equipmentId = document.getElementById('equipmentSelect').value;
+            const days = parseInt(document.getElementById('rentalDays').value);
+            const date = document.getElementById('rentalDate').value;
+            
+            if (!customerName || !equipmentId || !days || !date) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            updateSyncStatus('syncing');
+            
+            const rentalData = { customerName, equipmentId, days, date };
+            
+            if (editingRentalId) {
+                db.collection('rentals').doc(editingRentalId).update(rentalData)
+                    .then(() => {
+                        resetRentalForm();
+                        updateSyncStatus('synced');
+                    })
+                    .catch(error => {
+                        console.error('Error updating rental:', error);
+                        alert('Error updating rental');
+                        updateSyncStatus('error');
+                    });
+            } else {
+                db.collection('rentals').add(rentalData)
+                    .then(() => {
+                        resetRentalForm();
+                        updateSyncStatus('synced');
+                    })
+                    .catch(error => {
+                        console.error('Error adding rental:', error);
+                        alert('Error adding rental');
+                        updateSyncStatus('error');
+                    });
+            }
+        }
+
+        function editRental(id) {
+            const rental = rentalList.find(r => r.id === id);
+            if (!rental) return;
+            
+            document.getElementById('customerName').value = rental.customerName;
+            document.getElementById('equipmentSelect').value = rental.equipmentId;
+            document.getElementById('rentalDays').value = rental.days;
+            document.getElementById('rentalDate').value = rental.date;
+            document.getElementById('rentalForm').querySelector('button').innerHTML = '💾 Update Rental';
+            editingRentalId = id;
+        }
+
+        function resetRentalForm() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('equipmentSelect').value = '';
+            document.getElementById('rentalDays').value = '';
+            document.getElementById('rentalDate').value = '';
+            document.getElementById('rentalForm').querySelector('button').innerHTML = '➕ Add Rental';
+            editingRentalId = null;
+        }
+
+        function markPaid(id) {
+            if (!confirm('Mark this rental as paid?')) return;
+
+            const rental = rentalList.find(r => r.id === id);
+            if (!rental) return;
+
+            const rentalDate = new Date(rental.date);
+            const monthKey = `${rentalDate.getFullYear()}-${String(rentalDate.getMonth() + 1).padStart(2, '0')}`;
+            
+            const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+            const totalCost = equipment ? equipment.price * rental.days : 0;
+
+            const pastRental = {
+                customerName: rental.customerName,
+                equipmentId: rental.equipmentId,
+                days: rental.days,
+                date: rental.date,
+                totalCost: totalCost,
+                paid: false  // Customer hasn't paid yet
+            };
+
+            updateSyncStatus('syncing');
+
+            db.collection('pastRentals').doc(monthKey).get()
+                .then(doc => {
+                    const rentals = doc.exists ? (doc.data().rentals || []) : [];
+                    rentals.push(pastRental);
+                    return db.collection('pastRentals').doc(monthKey).set({ rentals });
+                })
+                .then(() => {
+                    return db.collection('rentals').doc(id).delete();
+                })
+                .then(() => {
+                    updateSyncStatus('synced');
+                })
+                .catch(error => {
+                    console.error('Error marking rental as paid:', error);
+                    alert('Error marking rental as paid');
+                    updateSyncStatus('error');
+                });
+        }
+
+        function renderRentalTable() {
+            const tbody = document.querySelector('#rentalTable tbody');
+            tbody.innerHTML = '';
+            
+            rentalList.forEach(rental => {
+                const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+                const totalCost = equipment ? (equipment.price * rental.days).toFixed(2) : 'N/A';
+                const formattedDate = new Date(rental.date).toLocaleDateString();
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${rental.customerName}</strong></td>
+                    <td>${equipment ? equipment.name : '<em>Deleted</em>'}</td>
+                    <td>${rental.days}</td>
+                    <td>${formattedDate}</td>
+                    <td><strong>$${totalCost}</strong></td>
+                    <td class="actions">
+                        <button class="btn-secondary" onclick="editRental('${rental.id}')">✏️ Edit</button>
+                        <button class="btn-success" onclick="markPaid('${rental.id}')">✓ Mark Paid</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ===========================================
+        // FUTURE RENTALS MANAGEMENT
+        // ===========================================
+        
+        function addFutureRental(event) {
+            event.preventDefault();
+            const customerName = document.getElementById('futureCustomerName').value.trim();
+            const equipmentId = document.getElementById('futureEquipmentSelect').value;
+            const days = parseInt(document.getElementById('futureRentalDays').value);
+            const date = document.getElementById('futureRentalDate').value;
+            
+            if (!customerName || !equipmentId || !days || !date) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            updateSyncStatus('syncing');
+            
+            const rentalData = { customerName, equipmentId, days, date };
+            
+            if (editingFutureRentalId) {
+                db.collection('futureRentals').doc(editingFutureRentalId).update(rentalData)
+                    .then(() => {
+                        resetFutureRentalForm();
+                        updateSyncStatus('synced');
+                    })
+                    .catch(error => {
+                        console.error('Error updating future rental:', error);
+                        alert('Error updating booking');
+                        updateSyncStatus('error');
+                    });
+            } else {
+                db.collection('futureRentals').add(rentalData)
+                    .then(() => {
+                        resetFutureRentalForm();
+                        updateSyncStatus('synced');
+                    })
+                    .catch(error => {
+                        console.error('Error adding future rental:', error);
+                        alert('Error adding booking');
+                        updateSyncStatus('error');
+                    });
+            }
+        }
+
+        function editFutureRental(id) {
+            const rental = futureRentals.find(r => r.id === id);
+            if (!rental) return;
+            
+            document.getElementById('futureCustomerName').value = rental.customerName;
+            document.getElementById('futureEquipmentSelect').value = rental.equipmentId;
+            document.getElementById('futureRentalDays').value = rental.days;
+            document.getElementById('futureRentalDate').value = rental.date;
+            document.getElementById('futureRentalForm').querySelector('button').innerHTML = '💾 Update Booking';
+            editingFutureRentalId = id;
+            
+            // Show bookings section
+            document.getElementById('bookingsSection').classList.remove('section-hidden');
+            document.getElementById('bookingsBtn').innerHTML = '✕ Close';
+        }
+
+        function deleteFutureRental(id) {
+            if (!confirm('Delete this booking?')) return;
+
+            updateSyncStatus('syncing');
+            
+            db.collection('futureRentals').doc(id).delete()
+                .then(() => {
+                    updateSyncStatus('synced');
+                })
+                .catch(error => {
+                    console.error('Error deleting future rental:', error);
+                    alert('Error deleting booking');
+                    updateSyncStatus('error');
+                });
+        }
+
+        function confirmFutureRental(id) {
+            if (!confirm('Confirm this booking and move to current rentals?')) return;
+
+            const rental = futureRentals.find(r => r.id === id);
+            if (!rental) return;
+
+            updateSyncStatus('syncing');
+
+            const rentalData = {
+                customerName: rental.customerName,
+                equipmentId: rental.equipmentId,
+                days: rental.days,
+                date: rental.date
+            };
+
+            db.collection('rentals').add(rentalData)
+                .then(() => {
+                    return db.collection('futureRentals').doc(id).delete();
+                })
+                .then(() => {
+                    updateSyncStatus('synced');
+                })
+                .catch(error => {
+                    console.error('Error confirming future rental:', error);
+                    alert('Error confirming booking');
+                    updateSyncStatus('error');
+                });
+        }
+
+        function resetFutureRentalForm() {
+            document.getElementById('futureCustomerName').value = '';
+            document.getElementById('futureEquipmentSelect').value = '';
+            document.getElementById('futureRentalDays').value = '';
+            document.getElementById('futureRentalDate').value = '';
+            document.getElementById('futureRentalForm').querySelector('button').innerHTML = '➕ Add Booking';
+            editingFutureRentalId = null;
+        }
+
+        function renderFutureRentalsTable() {
+            const tbody = document.querySelector('#futureRentalsTable tbody');
+            tbody.innerHTML = '';
+            
+            futureRentals.forEach(rental => {
+                const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+                const totalCost = equipment ? (equipment.price * rental.days).toFixed(2) : 'N/A';
+                const formattedDate = new Date(rental.date).toLocaleDateString();
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${rental.customerName}</strong></td>
+                    <td>${equipment ? equipment.name : '<em>Deleted</em>'}</td>
+                    <td>${rental.days}</td>
+                    <td>${formattedDate}</td>
+                    <td><strong>$${totalCost}</strong></td>
+                    <td class="actions">
+                        <button class="btn-secondary" onclick="editFutureRental('${rental.id}')">✏️ Edit</button>
+                        <button class="btn-danger" onclick="deleteFutureRental('${rental.id}')">🗑️ Delete</button>
+                        <button class="btn-success" onclick="confirmFutureRental('${rental.id}')">✓ Confirm</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ===========================================
+        // PAST RENTALS & PAYMENT STATUS
+        // ===========================================
+        
+        function updateMonthSelect() {
+            const select = document.getElementById('monthSelect');
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Select Month</option>';
+            
+            const months = Object.keys(pastRentals).sort().reverse();
+            months.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month;
+                option.textContent = month;
+                select.appendChild(option);
+            });
+            
+            select.value = currentValue;
+        }
+
+        function renderPastRentals() {
+            const tbody = document.querySelector('#pastRentalsTable tbody');
+            tbody.innerHTML = '';
+            
+            const selectedMonth = document.getElementById('monthSelect').value;
+            if (!selectedMonth || !pastRentals[selectedMonth]) return;
+            
+            pastRentals[selectedMonth].forEach((rental, index) => {
+                const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+                const totalCost = rental.totalCost || (equipment ? equipment.price * rental.days : 0);
+                const formattedDate = new Date(rental.date).toLocaleDateString();
+                const paidStatus = rental.paid ? '✓ Paid' : '✗ Unpaid';
+                const paidClass = rental.paid ? 'status-paid' : 'status-unpaid';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${rental.customerName}</td>
+                    <td>${equipment ? equipment.name : 'Deleted'}</td>
+                    <td>${rental.days}</td>
+                    <td>${formattedDate}</td>
+                    <td>$${totalCost.toFixed(2)}<br><span class="${paidClass}">${paidStatus}</span></td>
+                    <td class="actions">
+                        <button class="btn-warning" onclick="openInfoMenu('${selectedMonth}', ${index})">💰 Payment</button>
+                        <button class="btn-danger" onclick="removePastRental('${selectedMonth}', ${index})">🗑️ Remove</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function removePastRental(month, index) {
+            if (!confirm('Remove this past rental?')) return;
+
+            const rentals = [...pastRentals[month]];
+            rentals.splice(index, 1);
+
+            updateSyncStatus('syncing');
+
+            if (rentals.length === 0) {
+                db.collection('pastRentals').doc(month).delete()
+                    .then(() => {
+                        updateSyncStatus('synced');
+                    })
+                    .catch(error => {
+                        console.error('Error removing past rental:', error);
+                        alert('Error removing past rental');
+                        updateSyncStatus('error');
+                    });
+            } else {
+                db.collection('pastRentals').doc(month).set({ rentals })
+                    .then(() => {
+                        updateSyncStatus('synced');
+                    })
+                    .catch(error => {
+                        console.error('Error removing past rental:', error);
+                        alert('Error removing past rental');
+                        updateSyncStatus('error');
+                    });
+            }
+        }
+
+        function openInfoMenu(month, index) {
+            currentMonth = month;
+            currentRental = index;
+            
+            const rental = pastRentals[month][index];
+            const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+            const totalCost = rental.totalCost || (equipment ? equipment.price * rental.days : 0);
+            
+            // Ensure rental has paid property
+            if (rental.paid === undefined) {
+                rental.paid = false;
+            }
+            
+            const paymentInfo = document.getElementById('paymentInfo');
+            paymentInfo.innerHTML = `
+                <strong>Customer:</strong> ${rental.customerName}<br>
+                <strong>Amount Owed:</strong> $${totalCost.toFixed(2)}<br>
+                <strong>Status:</strong> ${rental.paid ? '<span style="color: green;">Paid</span>' : '<span style="color: red;">Unpaid</span>'}
+            `;
+            
+            const button = document.getElementById('customerPaid');
+            if (rental.paid) {
+                button.textContent = 'Mark as Unpaid';
+                button.className = 'btn-danger';
+            } else {
+                button.textContent = 'Mark as Paid';
+                button.className = 'btn-success';
+            }
+            
+            document.getElementById('infoMenu').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closeInfoMenu() {
+            document.getElementById('infoMenu').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+            currentMonth = null;
+            currentRental = null;
+        }
+
+        function toggleCustomerPaid() {
+            const rental = pastRentals[currentMonth][currentRental];
+            rental.paid = !rental.paid;
+            
+            // Update Firebase
+            updateSyncStatus('syncing');
+            db.collection('pastRentals').doc(currentMonth).set({ rentals: pastRentals[currentMonth] })
+                .then(() => {
+                    updateSyncStatus('synced');
+                    // Update the UI
+                    const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+                    const totalCost = rental.totalCost || (equipment ? equipment.price * rental.days : 0);
+                    
+                    const paymentInfo = document.getElementById('paymentInfo');
+                    paymentInfo.innerHTML = `
+                        <strong>Customer:</strong> ${rental.customerName}<br>
+                        <strong>Amount Owed:</strong> $${totalCost.toFixed(2)}<br>
+                        <strong>Status:</strong> ${rental.paid ? '<span style="color: green;">Paid</span>' : '<span style="color: red;">Unpaid</span>'}
+                    `;
+                    
+                    const button = document.getElementById('customerPaid');
+                    if (rental.paid) {
+                        button.textContent = 'Mark as Unpaid';
+                        button.className = 'btn-danger';
+                    } else {
+                        button.textContent = 'Mark as Paid';
+                        button.className = 'btn-success';
+                    }
+                    
+                    renderPastRentals();
+                })
+                .catch(error => {
+                    console.error('Error updating payment status:', error);
+                    alert('Error updating payment status');
+                    updateSyncStatus('error');
+                });
+        }
+
+        // INITIALIZE
+        // ===========================================
+        
+        // Set default date to today
+        document.getElementById('rentalDate').valueAsDate = new Date();
+        document.getElementById('futureRentalDate').valueAsDate = new Date();
+    </script>
+</body>
+</html>
