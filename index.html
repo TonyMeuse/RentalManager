@@ -1297,10 +1297,15 @@
                         </div>
                         
                         <div class="summary-row">
-                            <span class="summary-label">Paid Pot:</span>
+                            <span class="summary-label">Total Paid Out:</span>
+                            <span class="summary-value" id="totalPaidOut">$0.00</span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span class="summary-label">Add to Paid Pot:</span>
                             <div class="paid-pot-input">
-                                <input type="number" id="paidPotInput" placeholder="0.00" min="0" step="0.01" onchange="calculateRemaining()">
-                                <button class="btn-primary" onclick="savePaidPot()">💾 Save</button>
+                                <input type="number" id="paidPotInput" placeholder="0.00" min="0" step="0.01">
+                                <button class="btn-primary" onclick="addToPaidPot()">➕ Add</button>
                             </div>
                         </div>
                         
@@ -1425,6 +1430,10 @@
         let editingEquipmentId = null;
         let editingRentalId = null;
         let editingFutureRentalId = null;
+
+        // Financial tracking
+        window.currentPaidPot = 0;
+        window.currentTotalCollected = 0;
 
         // ===========================================
         // AUTHENTICATION
@@ -1592,7 +1601,9 @@
 
                     // Load paid pot from settings
                     if (paidPotDoc.exists) {
-                        document.getElementById('paidPotInput').value = (paidPotDoc.data().amount || 0).toFixed(2);
+                        window.currentPaidPot = paidPotDoc.data().amount || 0;
+                    } else {
+                        window.currentPaidPot = 0;
                     }
 
                     renderAll();
@@ -1709,8 +1720,10 @@
             unsubscribeListeners.push(
                 db.collection('settings').doc('paidPot').onSnapshot(doc => {
                     if (doc.exists) {
-                        const amount = doc.data().amount || 0;
-                        document.getElementById('paidPotInput').value = amount.toFixed(2);
+                        window.currentPaidPot = doc.data().amount || 0;
+                        calculateRemaining();
+                    } else {
+                        window.currentPaidPot = 0;
                         calculateRemaining();
                     }
                 })
@@ -2342,8 +2355,11 @@
 
         function calculateRemaining() {
             const totalCollected = window.currentTotalCollected || 0;
-            const paidPot = parseFloat(document.getElementById('paidPotInput').value) || 0;
-            const remaining = totalCollected - paidPot;
+            const totalPaidOut = window.currentPaidPot || 0;
+            const remaining = totalCollected - totalPaidOut;
+            
+            // Update displays
+            document.getElementById('totalPaidOut').textContent = `$${totalPaidOut.toFixed(2)}`;
             
             const balanceElement = document.getElementById('remainingBalance');
             balanceElement.textContent = `$${remaining.toFixed(2)}`;
@@ -2357,21 +2373,25 @@
             }
         }
 
-        function savePaidPot() {
-            const paidPot = parseFloat(document.getElementById('paidPotInput').value) || 0;
-            const totalCollected = window.currentTotalCollected || 0;
-            const remaining = totalCollected - paidPot;
+        function addToPaidPot() {
+            const amountToAdd = parseFloat(document.getElementById('paidPotInput').value) || 0;
             
-            if (paidPot < 0) {
-                alert('Paid Pot cannot be negative');
+            if (amountToAdd <= 0) {
+                alert('Please enter an amount greater than 0');
                 return;
             }
+            
+            const currentPaidPot = window.currentPaidPot || 0;
+            const newPaidPot = currentPaidPot + amountToAdd;
+            
+            const totalCollected = window.currentTotalCollected || 0;
+            const remaining = totalCollected - newPaidPot;
             
             updateSyncStatus('syncing');
             
             // If balance reaches zero or below, reset everything
             if (remaining <= 0) {
-                if (!confirm('Balance is settled! This will reset Total Collected and Paid Pot to $0. Continue?')) {
+                if (!confirm(`This payment will settle the balance! Total Collected will reset to $0. Add $${amountToAdd.toFixed(2)}?`)) {
                     updateSyncStatus('synced');
                     return;
                 }
@@ -2389,8 +2409,9 @@
                     .then(() => {
                         updateSyncStatus('synced');
                         showAlert('✅ Balance settled! Everything reset to $0');
-                        // Reset local display
-                        document.getElementById('paidPotInput').value = '0.00';
+                        // Reset local state
+                        document.getElementById('paidPotInput').value = '';
+                        window.currentPaidPot = 0;
                         pastRentals = {};
                         renderPastRentals();
                     })
@@ -2400,11 +2421,16 @@
                         updateSyncStatus('error');
                     });
             } else {
-                // Just save the paid pot normally
-                db.collection('settings').doc('paidPot').set({ amount: paidPot })
+                // Just add to the paid pot normally
+                db.collection('settings').doc('paidPot').set({ amount: newPaidPot })
                     .then(() => {
                         updateSyncStatus('synced');
-                        showAlert('Paid Pot saved successfully!');
+                        showAlert(`✅ Added $${amountToAdd.toFixed(2)} to Paid Pot!`);
+                        // Clear input field
+                        document.getElementById('paidPotInput').value = '';
+                        // Update local state
+                        window.currentPaidPot = newPaidPot;
+                        calculateRemaining();
                     })
                     .catch(error => {
                         console.error('Error saving paid pot:', error);
