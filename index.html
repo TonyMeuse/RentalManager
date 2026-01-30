@@ -1872,6 +1872,28 @@
             const rentalData = { customerName, equipmentId, days, date };
             
             if (editingFutureRentalId) {
+                // Update local array immediately for instant UI update
+                const index = futureRentals.findIndex(r => r.id === editingFutureRentalId);
+                if (index >= 0) {
+                    futureRentals[index] = { ...futureRentals[index], ...rentalData };
+                }
+                
+                // Refresh views immediately
+                const calendarSection = document.getElementById('futureBookingsCalendarSection');
+                const tomorrowSection = document.getElementById('futureBookingsTomorrowSection');
+                
+                if (calendarSection && calendarSection.classList.contains('active')) {
+                    renderCalendar();
+                    if (selectedDate) {
+                        const [year, month, day] = selectedDate.split('-').map(Number);
+                        selectDate(year, month - 1, day);
+                    }
+                }
+                if (tomorrowSection && tomorrowSection.classList.contains('active')) {
+                    renderTomorrowBookings();
+                }
+                
+                // Now update Firebase
                 db.collection('futureRentals').doc(editingFutureRentalId).update(rentalData)
                     .then(() => {
                         resetFutureRentalForm();
@@ -1883,6 +1905,7 @@
                         updateSyncStatus('error');
                     });
             } else {
+                // For new bookings, Firebase listener will handle the UI update
                 db.collection('futureRentals').add(rentalData)
                     .then(() => {
                         resetFutureRentalForm();
@@ -1914,8 +1937,31 @@
         function deleteFutureRental(id) {
             if (!confirm('Delete this booking?')) return;
 
+            // Store the rental in case we need to restore it on error
+            const rental = futureRentals.find(r => r.id === id);
+
             updateSyncStatus('syncing');
             
+            // Remove from local array immediately for instant UI update
+            futureRentals = futureRentals.filter(r => r.id !== id);
+            
+            // Refresh views immediately
+            const calendarSection = document.getElementById('futureBookingsCalendarSection');
+            const tomorrowSection = document.getElementById('futureBookingsTomorrowSection');
+            
+            if (calendarSection && calendarSection.classList.contains('active')) {
+                renderCalendar();
+                // If viewing a specific date, refresh that too
+                if (selectedDate) {
+                    const [year, month, day] = selectedDate.split('-').map(Number);
+                    selectDate(year, month - 1, day);
+                }
+            }
+            if (tomorrowSection && tomorrowSection.classList.contains('active')) {
+                renderTomorrowBookings();
+            }
+            
+            // Now update Firebase
             db.collection('futureRentals').doc(id).delete()
                 .then(() => {
                     updateSyncStatus('synced');
@@ -1924,6 +1970,17 @@
                     console.error('Error deleting future rental:', error);
                     alert('Error deleting booking');
                     updateSyncStatus('error');
+                    // If error, add back to local array
+                    if (rental) {
+                        futureRentals.push(rental);
+                        // Re-render views
+                        if (calendarSection && calendarSection.classList.contains('active')) {
+                            renderCalendar();
+                        }
+                        if (tomorrowSection && tomorrowSection.classList.contains('active')) {
+                            renderTomorrowBookings();
+                        }
+                    }
                 });
         }
 
@@ -1942,6 +1999,26 @@
                 date: rental.date
             };
 
+            // Remove from local array immediately for instant UI update
+            futureRentals = futureRentals.filter(r => r.id !== id);
+            
+            // Refresh views immediately
+            const calendarSection = document.getElementById('futureBookingsCalendarSection');
+            const tomorrowSection = document.getElementById('futureBookingsTomorrowSection');
+            
+            if (calendarSection && calendarSection.classList.contains('active')) {
+                renderCalendar();
+                // If viewing a specific date, refresh that too
+                if (selectedDate) {
+                    const [year, month, day] = selectedDate.split('-').map(Number);
+                    selectDate(year, month - 1, day);
+                }
+            }
+            if (tomorrowSection && tomorrowSection.classList.contains('active')) {
+                renderTomorrowBookings();
+            }
+
+            // Now update Firebase
             db.collection('rentals').add(rentalData)
                 .then(() => {
                     return db.collection('futureRentals').doc(id).delete();
@@ -1953,6 +2030,15 @@
                     console.error('Error confirming future rental:', error);
                     alert('Error confirming booking');
                     updateSyncStatus('error');
+                    // If error, add back to local array
+                    futureRentals.push(rental);
+                    // Re-render views
+                    if (calendarSection && calendarSection.classList.contains('active')) {
+                        renderCalendar();
+                    }
+                    if (tomorrowSection && tomorrowSection.classList.contains('active')) {
+                        renderTomorrowBookings();
+                    }
                 });
         }
 
