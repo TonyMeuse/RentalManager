@@ -843,6 +843,88 @@
             max-width: 300px;
         }
 
+        /* Summary Cards */
+        .summary-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .summary-card h3 {
+            color: #4CAF50;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 1.4em;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-row.total-row {
+            margin-top: 15px;
+            padding-top: 20px;
+            border-top: 3px solid #4CAF50;
+            border-bottom: none;
+        }
+
+        .summary-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .summary-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .summary-value.balance {
+            color: #4CAF50;
+            font-size: 1.6em;
+        }
+
+        #paidPotInput {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .summary-card {
+                padding: 20px 15px;
+            }
+            
+            .summary-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .summary-value {
+                font-size: 1.2em;
+            }
+            
+            #paidPotInput {
+                width: 100%;
+                max-width: 100% !important;
+            }
+        }
+
         /* Sync status indicator */
         .sync-status {
             position: fixed;
@@ -886,6 +968,110 @@
             color: #f44336;
             font-weight: 700;
             font-size: 0.95em;
+        }
+
+        /* Financial Summary Cards */
+        .financial-summary {
+            max-width: 600px;
+            margin: 30px auto;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .summary-card h3 {
+            margin: 0 0 20px 0;
+            color: #4CAF50;
+            font-size: 1.3em;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            font-size: 1.1em;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .summary-value {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .summary-value.positive {
+            color: #4CAF50;
+        }
+
+        .summary-value.negative {
+            color: #f44336;
+        }
+
+        .paid-pot-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .paid-pot-input input {
+            flex: 1;
+            padding: 12px;
+            font-size: 1.1em;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            margin: 0;
+            max-width: 200px;
+        }
+
+        .paid-pot-input input:focus {
+            border-color: #4CAF50;
+        }
+
+        .paid-pot-input button {
+            padding: 12px 20px;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .summary-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .summary-value {
+                font-size: 1.3em;
+            }
+
+            .paid-pot-input {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .paid-pot-input input {
+                max-width: 100%;
+            }
+
+            .paid-pot-input button {
+                width: 100%;
+            }
         }
 
         /* Link styling */
@@ -1100,25 +1286,29 @@
             <div id="pastRentalsSection" class="section-container">
                 <button class="back-btn" onclick="showSection('mainMenu')">← Back to Menu</button>
                 <h2>💰 Past Rentals</h2>
-                <div id="pastRentalsFilter">
-                    <select id="monthSelect" onchange="renderPastRentals()">
-                        <option value="">Select Month</option>
-                    </select>
-                </div>
-                <div class="table-wrapper">
-                    <table id="pastRentalsTable">
-                        <thead>
-                            <tr>
-                                <th>Customer</th>
-                                <th>Equipment</th>
-                                <th>Days</th>
-                                <th>Date</th>
-                                <th>Cost ($)</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+
+                <div class="financial-summary">
+                    <div class="summary-card">
+                        <h3>💵 Financial Summary</h3>
+                        
+                        <div class="summary-row">
+                            <span class="summary-label">Total Collected:</span>
+                            <span class="summary-value" id="totalCollected">$0.00</span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span class="summary-label">Paid Pot:</span>
+                            <div class="paid-pot-input">
+                                <input type="number" id="paidPotInput" placeholder="0.00" min="0" step="0.01" onchange="calculateRemaining()">
+                                <button class="btn-primary" onclick="savePaidPot()">💾 Save</button>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-row" style="border-top: 3px solid #4CAF50; margin-top: 15px; padding-top: 20px;">
+                            <span class="summary-label">Remaining Balance:</span>
+                            <span class="summary-value positive" id="remainingBalance">$0.00</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1380,11 +1570,12 @@
                 db.collection('equipment').get(),
                 db.collection('rentals').get(),
                 db.collection('futureRentals').get(),
-                db.collection('pastRentals').get()
+                db.collection('pastRentals').get(),
+                db.collection('settings').doc('paidPot').get()
             ];
 
             Promise.all(promises)
-                .then(([equipmentSnapshot, rentalsSnapshot, futureSnapshot, pastSnapshot]) => {
+                .then(([equipmentSnapshot, rentalsSnapshot, futureSnapshot, pastSnapshot, paidPotDoc]) => {
                     equipmentList = equipmentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     rentalList = rentalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     futureRentals = futureSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1392,8 +1583,17 @@
                     pastRentals = {};
                     pastSnapshot.forEach(doc => {
                         const month = doc.id;
-                        pastRentals[month] = doc.data().rentals || [];
+                        const data = doc.data();
+                        pastRentals[month] = {
+                            rentals: data.rentals || [],
+                            paidPot: data.paidPot || 0
+                        };
                     });
+
+                    // Load paid pot from settings
+                    if (paidPotDoc.exists) {
+                        document.getElementById('paidPotInput').value = (paidPotDoc.data().amount || 0).toFixed(2);
+                    }
 
                     renderAll();
                     updateSyncStatus('synced');
@@ -1495,10 +1695,24 @@
                 db.collection('pastRentals').onSnapshot(snapshot => {
                     pastRentals = {};
                     snapshot.forEach(doc => {
-                        pastRentals[doc.id] = doc.data().rentals || [];
+                        const data = doc.data();
+                        pastRentals[doc.id] = {
+                            rentals: data.rentals || [],
+                            paidPot: data.paidPot || 0
+                        };
                     });
-                    updateMonthSelect();
                     renderPastRentals();
+                })
+            );
+
+            // Listen for paid pot changes
+            unsubscribeListeners.push(
+                db.collection('settings').doc('paidPot').onSnapshot(doc => {
+                    if (doc.exists) {
+                        const amount = doc.data().amount || 0;
+                        document.getElementById('paidPotInput').value = amount.toFixed(2);
+                        calculateRemaining();
+                    }
                 })
             );
         }
@@ -1585,6 +1799,11 @@
                 if (sectionId === 'futureBookingsTomorrowSection') {
                     renderTomorrowBookings();
                 }
+                
+                // Load past rentals summary when opening that section
+                if (sectionId === 'pastRentalsSection') {
+                    renderPastRentals();
+                }
             }
         }
 
@@ -1596,7 +1815,6 @@
             renderEquipmentTable();
             renderRentalTable();
             updateEquipmentSelect();
-            updateMonthSelect();
             renderPastRentals();
         }
 
@@ -2098,33 +2316,68 @@
         }
 
         function renderPastRentals() {
-            const tbody = document.querySelector('#pastRentalsTable tbody');
-            tbody.innerHTML = '';
+            // Calculate total collected from ALL past rentals (all months combined)
+            let totalCollected = 0;
             
-            const selectedMonth = document.getElementById('monthSelect').value;
-            if (!selectedMonth || !pastRentals[selectedMonth]) return;
+            for (const month in pastRentals) {
+                const monthData = pastRentals[month];
+                if (monthData.rentals) {
+                    monthData.rentals.forEach(rental => {
+                        const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+                        const cost = rental.totalCost || (equipment ? equipment.price * rental.days : 0);
+                        totalCollected += cost;
+                    });
+                }
+            }
             
-            pastRentals[selectedMonth].forEach((rental, index) => {
-                const equipment = equipmentList.find(e => e.id === rental.equipmentId);
-                const totalCost = rental.totalCost || (equipment ? equipment.price * rental.days : 0);
-                const formattedDate = new Date(rental.date).toLocaleDateString();
-                const paidStatus = rental.paid ? '✓ Paid' : '✗ Unpaid';
-                const paidClass = rental.paid ? 'status-paid' : 'status-unpaid';
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td data-label="Customer"><strong>${rental.customerName}</strong></td>
-                    <td data-label="Equipment">${equipment ? equipment.name : '<em>Deleted</em>'}</td>
-                    <td data-label="Days">${rental.days}</td>
-                    <td data-label="Date">${formattedDate}</td>
-                    <td data-label="Total & Status">$${totalCost.toFixed(2)}<br><span class="${paidClass}">${paidStatus}</span></td>
-                    <td class="actions">
-                        <button class="btn-warning" onclick="openInfoMenu('${selectedMonth}', ${index})">💰 Payment</button>
-                        <button class="btn-danger" onclick="removePastRental('${selectedMonth}', ${index})">🗑️ Remove</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
+            // Update display
+            document.getElementById('totalCollected').textContent = `$${totalCollected.toFixed(2)}`;
+            
+            // Store total for calculation
+            window.currentTotalCollected = totalCollected;
+            
+            // Calculate and show remaining
+            calculateRemaining();
+        }
+
+        function calculateRemaining() {
+            const totalCollected = window.currentTotalCollected || 0;
+            const paidPot = parseFloat(document.getElementById('paidPotInput').value) || 0;
+            const remaining = totalCollected - paidPot;
+            
+            const balanceElement = document.getElementById('remainingBalance');
+            balanceElement.textContent = `$${remaining.toFixed(2)}`;
+            
+            // Color code based on positive/negative
+            balanceElement.classList.remove('positive', 'negative');
+            if (remaining >= 0) {
+                balanceElement.classList.add('positive');
+            } else {
+                balanceElement.classList.add('negative');
+            }
+        }
+
+        function savePaidPot() {
+            const paidPot = parseFloat(document.getElementById('paidPotInput').value) || 0;
+            
+            if (paidPot < 0) {
+                alert('Paid Pot cannot be negative');
+                return;
+            }
+            
+            updateSyncStatus('syncing');
+            
+            // Save paidPot to settings collection
+            db.collection('settings').doc('paidPot').set({ amount: paidPot })
+                .then(() => {
+                    updateSyncStatus('synced');
+                    showAlert('Paid Pot saved successfully!');
+                })
+                .catch(error => {
+                    console.error('Error saving paid pot:', error);
+                    alert('Error saving paid pot');
+                    updateSyncStatus('error');
+                });
         }
 
         function removePastRental(month, index) {
