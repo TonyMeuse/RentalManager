@@ -1297,15 +1297,11 @@
                         </div>
                         
                         <div class="summary-row">
-                            <span class="summary-label">Total Paid Out:</span>
-                            <span class="summary-value" id="totalPaidOut">$0.00</span>
-                        </div>
-                        
-                        <div class="summary-row">
-                            <span class="summary-label">Add to Paid Pot:</span>
+                            <span class="summary-label">Paid Pot:</span>
                             <div class="paid-pot-input">
-                                <input type="number" id="paidPotInput" placeholder="0.00" min="0" step="0.01">
-                                <button class="btn-primary" onclick="addToPaidPot()">➕ Add</button>
+                                <span style="font-size: 1.4em; font-weight: 700; margin-right: 5px;">$</span>
+                                <input type="number" id="paidPotInput" placeholder="0.00" min="0" step="0.01" onchange="calculateRemaining()">
+                                <button class="btn-primary" onclick="savePaidPot()">💾 Save</button>
                             </div>
                         </div>
                         
@@ -1601,7 +1597,9 @@
 
                     // Load paid pot from settings
                     if (paidPotDoc.exists) {
-                        window.currentPaidPot = paidPotDoc.data().amount || 0;
+                        const amount = paidPotDoc.data().amount || 0;
+                        window.currentPaidPot = amount;
+                        document.getElementById('paidPotInput').value = amount.toFixed(2);
                     } else {
                         window.currentPaidPot = 0;
                     }
@@ -1720,10 +1718,13 @@
             unsubscribeListeners.push(
                 db.collection('settings').doc('paidPot').onSnapshot(doc => {
                     if (doc.exists) {
-                        window.currentPaidPot = doc.data().amount || 0;
+                        const amount = doc.data().amount || 0;
+                        window.currentPaidPot = amount;
+                        document.getElementById('paidPotInput').value = amount.toFixed(2);
                         calculateRemaining();
                     } else {
                         window.currentPaidPot = 0;
+                        document.getElementById('paidPotInput').value = '';
                         calculateRemaining();
                     }
                 })
@@ -2329,7 +2330,7 @@
         }
 
         function renderPastRentals() {
-            // Calculate total collected from ALL past rentals (all months combined)
+            // Calculate total collected from ALL past rentals
             let totalCollected = 0;
             
             for (const month in pastRentals) {
@@ -2345,71 +2346,55 @@
             
             // Update display
             document.getElementById('totalCollected').textContent = `$${totalCollected.toFixed(2)}`;
-            
-            // Store total for calculation
             window.currentTotalCollected = totalCollected;
             
-            // Calculate and show remaining
+            // Calculate remaining
             calculateRemaining();
         }
 
         function calculateRemaining() {
             const totalCollected = window.currentTotalCollected || 0;
-            const totalPaidOut = window.currentPaidPot || 0;
-            const remaining = totalCollected - totalPaidOut;
-            
-            // Update displays
-            document.getElementById('totalPaidOut').textContent = `$${totalPaidOut.toFixed(2)}`;
+            const paidPot = parseFloat(document.getElementById('paidPotInput').value) || 0;
+            const remaining = totalCollected - paidPot;
             
             const balanceElement = document.getElementById('remainingBalance');
             balanceElement.textContent = `$${remaining.toFixed(2)}`;
             
-            // Color code based on positive/negative
+            // Color code
             balanceElement.classList.remove('positive', 'negative');
-            if (remaining >= 0) {
-                balanceElement.classList.add('positive');
-            } else {
-                balanceElement.classList.add('negative');
-            }
+            balanceElement.classList.add(remaining >= 0 ? 'positive' : 'negative');
         }
 
-        function addToPaidPot() {
-            const amountToAdd = parseFloat(document.getElementById('paidPotInput').value) || 0;
+        function savePaidPot() {
+            const paidPot = parseFloat(document.getElementById('paidPotInput').value) || 0;
+            const totalCollected = window.currentTotalCollected || 0;
+            const remaining = totalCollected - paidPot;
             
-            if (amountToAdd <= 0) {
-                alert('Please enter an amount greater than 0');
+            if (paidPot < 0) {
+                alert('Amount cannot be negative');
                 return;
             }
             
-            const currentPaidPot = window.currentPaidPot || 0;
-            const newPaidPot = currentPaidPot + amountToAdd;
-            
-            const totalCollected = window.currentTotalCollected || 0;
-            const remaining = totalCollected - newPaidPot;
-            
             updateSyncStatus('syncing');
             
-            // If balance reaches zero or below, reset everything
+            // If remaining is zero or negative, reset everything
             if (remaining <= 0) {
-                if (!confirm(`This payment will settle the balance! Total Collected will reset to $0. Add $${amountToAdd.toFixed(2)}?`)) {
+                if (!confirm('Balance will be settled! This will reset Total Collected to $0. Continue?')) {
                     updateSyncStatus('synced');
                     return;
                 }
                 
-                // Delete all past rentals (all months)
+                // Delete all past rentals
                 const deletePromises = [];
                 for (const month in pastRentals) {
                     deletePromises.push(db.collection('pastRentals').doc(month).delete());
                 }
-                
-                // Reset paid pot to zero
                 deletePromises.push(db.collection('settings').doc('paidPot').set({ amount: 0 }));
                 
                 Promise.all(deletePromises)
                     .then(() => {
                         updateSyncStatus('synced');
-                        showAlert('✅ Balance settled! Everything reset to $0');
-                        // Reset local state
+                        showAlert('✅ Balance settled! Reset to $0');
                         document.getElementById('paidPotInput').value = '';
                         window.currentPaidPot = 0;
                         pastRentals = {};
@@ -2417,24 +2402,20 @@
                     })
                     .catch(error => {
                         console.error('Error resetting:', error);
-                        alert('Error resetting balance');
+                        alert('Error resetting');
                         updateSyncStatus('error');
                     });
             } else {
-                // Just add to the paid pot normally
-                db.collection('settings').doc('paidPot').set({ amount: newPaidPot })
+                // Save normally
+                db.collection('settings').doc('paidPot').set({ amount: paidPot })
                     .then(() => {
                         updateSyncStatus('synced');
-                        showAlert(`✅ Added $${amountToAdd.toFixed(2)} to Paid Pot!`);
-                        // Clear input field
-                        document.getElementById('paidPotInput').value = '';
-                        // Update local state
-                        window.currentPaidPot = newPaidPot;
-                        calculateRemaining();
+                        showAlert('✅ Saved!');
+                        window.currentPaidPot = paidPot;
                     })
                     .catch(error => {
-                        console.error('Error saving paid pot:', error);
-                        alert('Error saving paid pot');
+                        console.error('Error saving:', error);
+                        alert('Error saving');
                         updateSyncStatus('error');
                     });
             }
