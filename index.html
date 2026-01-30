@@ -588,6 +588,16 @@
             font-size: 16px;
             transition: border 0.3s;
             background: white;
+            box-sizing: border-box;
+            height: 48px;
+        }
+
+        /* Normalize date input appearance */
+        input[type="date"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding: 12px;
         }
 
         input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus {
@@ -2386,13 +2396,8 @@
             
             updateSyncStatus('syncing');
             
-            // If remaining is zero or negative, reset everything
+            // If remaining is zero or negative, reset everything automatically
             if (remaining <= 0) {
-                if (!confirm(`This will settle the balance! Total Collected will reset to $0. Add $${newPayment.toFixed(2)}?`)) {
-                    updateSyncStatus('synced');
-                    return;
-                }
-                
                 // Delete all past rentals
                 const deletePromises = [];
                 for (const month in pastRentals) {
