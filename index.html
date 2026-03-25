@@ -1378,15 +1378,27 @@
             <div id="futureBookingsAddSection" class="section-container">
                 <button class="back-btn" onclick="showSection('futureBookingsSection')">← Back to Bookings Manager</button>
                 <h2>➕ Add Booking</h2>
-                <form id="futureRentalForm" onsubmit="addFutureRental(event)">
-                    <input type="text" id="futureCustomerName" placeholder="Customer Name" required>
-                    <select id="futureEquipmentSelect" required>
-                        <option value="">Select Equipment</option>
-                    </select>
-                    <input type="number" id="futureRentalDays" placeholder="Rental Days" min="1" required>
-                    <input type="date" id="futureRentalDate" required>
-                    <button type="submit" class="btn-primary">➕ Add Booking</button>
-                </form>
+                
+               <form id="futureRentalForm" onsubmit="addFutureRental(event)">
+    <input type="text" id="futureCustomerName" placeholder="Customer Name" required>
+    <select id="futureEquipmentSelect" required>
+        <option value="">Select Equipment</option>
+    </select>
+    <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+        <p style="margin-bottom: 10px; font-weight: 600; color: #666;">Select Rental Dates (click to select/unselect):</p>
+        <div id="bookingCalendarContainer">
+            <div class="calendar-header">
+                <button type="button" onclick="changeBookingMonth(-1)">←</button>
+                <h3 id="bookingCalendarMonthYear"></h3>
+                <button type="button" onclick="changeBookingMonth(1)">→</button>
+            </div>
+            <div class="calendar-grid" id="bookingCalendarGrid"></div>
+        </div>
+        <p id="selectedDatesDisplay" style="margin-top: 15px; font-size: 14px; color: #666;">No dates selected</p>
+    </div>
+                   
+    <button type="submit" class="btn-primary">➕ Add Booking</button>
+</form>
             </div>
 
             <!-- Future Bookings - Calendar Section -->
@@ -2012,10 +2024,16 @@
                     renderTomorrowBookings();
                 }
                 
-                // Load past rentals summary when opening that section
-                if (sectionId === 'pastRentalsSection') {
-                    renderPastRentals();
-                }
+               // Load past rentals summary when opening that section
+if (sectionId === 'pastRentalsSection') {
+    renderPastRentals();
+}
+
+// Load booking calendar when opening add booking section
+if (sectionId === 'futureBookingsAddSection') {
+    currentBookingCalendarDate = new Date();
+    renderBookingCalendar();
+}
             }
         }
 
@@ -2297,68 +2315,76 @@
         // ===========================================
         
         function addFutureRental(event) {
-            event.preventDefault();
-            const customerName = document.getElementById('futureCustomerName').value.trim();
-            const equipmentId = document.getElementById('futureEquipmentSelect').value;
-            const days = parseInt(document.getElementById('futureRentalDays').value);
-            const date = document.getElementById('futureRentalDate').value;
-            
-            if (!customerName || !equipmentId || !days || !date) {
-                alert('Please fill all fields');
-                return;
-            }
+    event.preventDefault();
+    const customerName = document.getElementById('futureCustomerName').value.trim();
+    const equipmentId = document.getElementById('futureEquipmentSelect').value;
+    
+    // Validate inputs
+    if (!customerName || !equipmentId) {
+        alert('Please fill in customer name and select equipment');
+        return;
+    }
+    
+    if (selectedBookingDates.length === 0) {
+        alert('Please select at least one date on the calendar');
+        return;
+    }
+    
+    // Get the first date (start date) and number of days
+    const date = selectedBookingDates[0];
+    const days = selectedBookingDates.length;
 
-            updateSyncStatus('syncing');
-            
-            const rentalData = { customerName, equipmentId, days, date };
-            
-            if (editingFutureRentalId) {
-                // Update local array immediately for instant UI update
-                const index = futureRentals.findIndex(r => r.id === editingFutureRentalId);
-                if (index >= 0) {
-                    futureRentals[index] = { ...futureRentals[index], ...rentalData };
-                }
-                
-                // Refresh views immediately
-                const calendarSection = document.getElementById('futureBookingsCalendarSection');
-                const tomorrowSection = document.getElementById('futureBookingsTomorrowSection');
-                
-                if (calendarSection && calendarSection.classList.contains('active')) {
-                    renderCalendar();
-                    if (selectedDate) {
-                        const [year, month, day] = selectedDate.split('-').map(Number);
-                        selectDate(year, month - 1, day);
-                    }
-                }
-                if (tomorrowSection && tomorrowSection.classList.contains('active')) {
-                    renderTomorrowBookings();
-                }
-                
-                // Now update Firebase
-                db.collection('futureRentals').doc(editingFutureRentalId).update(rentalData)
-                    .then(() => {
-                        resetFutureRentalForm();
-                        updateSyncStatus('synced');
-                    })
-                    .catch(error => {
-                        console.error('Error updating future rental:', error);
-                        alert('Error updating booking');
-                        updateSyncStatus('error');
-                    });
-            } else {
-                // For new bookings, Firebase listener will handle the UI update
-                db.collection('futureRentals').add(rentalData)
-                    .then(() => {
-                        resetFutureRentalForm();
-                        updateSyncStatus('synced');
-                    })
-                    .catch(error => {
-                        console.error('Error adding future rental:', error);
-                        alert('Error adding booking');
-                        updateSyncStatus('error');
-                    });
+    updateSyncStatus('syncing');
+    
+    const rentalData = { customerName, equipmentId, days, date };
+    
+    if (editingFutureRentalId) {
+        // Update local array immediately for instant UI update
+        const index = futureRentals.findIndex(r => r.id === editingFutureRentalId);
+        if (index >= 0) {
+            futureRentals[index] = { ...futureRentals[index], ...rentalData };
+        }
+        
+        // Refresh views immediately
+        const calendarSection = document.getElementById('futureBookingsCalendarSection');
+        const tomorrowSection = document.getElementById('futureBookingsTomorrowSection');
+        
+        if (calendarSection && calendarSection.classList.contains('active')) {
+            renderCalendar();
+            if (selectedDate) {
+                const [year, month, day] = selectedDate.split('-').map(Number);
+                selectDate(year, month - 1, day);
             }
         }
+        if (tomorrowSection && tomorrowSection.classList.contains('active')) {
+            renderTomorrowBookings();
+        }
+        
+        // Now update Firebase
+        db.collection('futureRentals').doc(editingFutureRentalId).update(rentalData)
+            .then(() => {
+                resetFutureRentalForm();
+                updateSyncStatus('synced');
+            })
+            .catch(error => {
+                console.error('Error updating future rental:', error);
+                alert('Error updating booking');
+                updateSyncStatus('error');
+            });
+    } else {
+        // For new bookings, Firebase listener will handle the UI update
+        db.collection('futureRentals').add(rentalData)
+            .then(() => {
+                resetFutureRentalForm();
+                updateSyncStatus('synced');
+            })
+            .catch(error => {
+                console.error('Error adding future rental:', error);
+                alert('Error adding booking');
+                updateSyncStatus('error');
+            });
+    }
+}
 
         function editFutureRental(id) {
             const rental = futureRentals.find(r => r.id === id);
@@ -2484,13 +2510,123 @@
         }
 
         function resetFutureRentalForm() {
-            document.getElementById('futureCustomerName').value = '';
-            document.getElementById('futureEquipmentSelect').value = '';
-            document.getElementById('futureRentalDays').value = '';
-            document.getElementById('futureRentalDate').value = '';
-            document.getElementById('futureRentalForm').querySelector('button').innerHTML = '➕ Add Booking';
-            editingFutureRentalId = null;
+    document.getElementById('futureCustomerName').value = '';
+    document.getElementById('futureEquipmentSelect').value = '';
+    document.getElementById('futureRentalForm').querySelector('button').innerHTML = '➕ Add Booking';
+    editingFutureRentalId = null;
+    selectedBookingDates = [];
+    updateSelectedDatesDisplay();
+}
+
+// ===========================================
+// BOOKING CALENDAR (DATE SELECTION)
+// ===========================================
+
+let currentBookingCalendarDate = new Date();
+let selectedBookingDates = [];
+
+function renderBookingCalendar() {
+    const year = currentBookingCalendarDate.getFullYear();
+    const month = currentBookingCalendarDate.getMonth();
+    
+    // Update header
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    document.getElementById('bookingCalendarMonthYear').textContent = `${monthNames[month]} ${year}`;
+    
+    // Get first day of month and number of days
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Get today's date
+    const today = new Date();
+    const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+    const todayDate = today.getDate();
+    
+    // Build calendar grid
+    const grid = document.getElementById('bookingCalendarGrid');
+    grid.innerHTML = '';
+    
+    // Add day headers
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    dayNames.forEach(day => {
+        const header = document.createElement('div');
+        header.className = 'calendar-day-header';
+        header.textContent = day;
+        grid.appendChild(header);
+    });
+    
+    // Add empty cells before first day
+    for (let i = 0; i < firstDay; i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'calendar-day empty';
+        grid.appendChild(emptyDay);
+    }
+    
+    // Add day cells
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayCell = document.createElement('div');
+        dayCell.className = 'calendar-day';
+        dayCell.textContent = day;
+        
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        // Highlight today
+        if (isCurrentMonth && day === todayDate) {
+            dayCell.classList.add('today');
         }
+        
+        // Check if this date is already selected
+        if (selectedBookingDates.includes(dateStr)) {
+            dayCell.classList.add('selected');
+        }
+        
+        // Add click handler
+        dayCell.onclick = () => toggleBookingDate(dateStr);
+        
+        grid.appendChild(dayCell);
+    }
+}
+
+function toggleBookingDate(dateStr) {
+    const index = selectedBookingDates.indexOf(dateStr);
+    
+    if (index >= 0) {
+        // Date is already selected, remove it
+        selectedBookingDates.splice(index, 1);
+    } else {
+        // Date is not selected, add it
+        selectedBookingDates.push(dateStr);
+    }
+    
+    // Sort dates chronologically
+    selectedBookingDates.sort();
+    
+    // Re-render calendar to show selection
+    renderBookingCalendar();
+    
+    // Update display text
+    updateSelectedDatesDisplay();
+}
+
+function updateSelectedDatesDisplay() {
+    const display = document.getElementById('selectedDatesDisplay');
+    
+    if (selectedBookingDates.length === 0) {
+        display.textContent = 'No dates selected';
+        display.style.color = '#666';
+    } else {
+        display.textContent = `${selectedBookingDates.length} day${selectedBookingDates.length > 1 ? 's' : ''} selected: ${selectedBookingDates.join(', ')}`;
+        display.style.color = '#4CAF50';
+        display.style.fontWeight = '600';
+    }
+}
+
+function changeBookingMonth(direction) {
+    currentBookingCalendarDate.setDate(1);
+    currentBookingCalendarDate.setMonth(currentBookingCalendarDate.getMonth() + direction);
+    renderBookingCalendar();
+}
 
         function renderFutureRentalsTable() {
             const tbody = document.querySelector('#futureRentalsTable tbody');
