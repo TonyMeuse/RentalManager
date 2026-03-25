@@ -3134,14 +3134,16 @@ function changeBookingMonth(direction) {
             
             // Create a Set of all booked dates (YYYY-MM-DD format)
             const bookedDates = new Set();
-            equipmentBookings.forEach(booking => {
-                const startDate = new Date(booking.date);
-                const days = booking.days;
-                
-                // Add all days in the booking range
-                for (let i = 0; i < days; i++) {
-                    const currentDate = new Date(startDate);
-                    currentDate.setDate(startDate.getDate() + i);
+          equipmentBookings.forEach(booking => {
+    // Parse date string to avoid timezone issues
+    const [year, month, day] = booking.date.split('-').map(Number);
+    const startDate = new Date(year, month - 1, day);
+    const days = booking.days;
+    
+    // Add all days in the booking range
+    for (let i = 0; i < days; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
                     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
                     bookedDates.add(dateStr);
                 }
