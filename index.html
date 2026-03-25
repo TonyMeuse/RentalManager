@@ -2386,20 +2386,36 @@ if (sectionId === 'futureBookingsAddSection') {
     }
 }
 
-        function editFutureRental(id) {
-            const rental = futureRentals.find(r => r.id === id);
-            if (!rental) return;
-            
-            document.getElementById('futureCustomerName').value = rental.customerName;
-            document.getElementById('futureEquipmentSelect').value = rental.equipmentId;
-            document.getElementById('futureRentalDays').value = rental.days;
-            document.getElementById('futureRentalDate').value = rental.date;
-            document.getElementById('futureRentalForm').querySelector('button').innerHTML = '💾 Update Booking';
-            editingFutureRentalId = id;
-            
-            // Show future bookings add section
-            showSection('futureBookingsAddSection');
-        }
+       function editFutureRental(id) {
+    const rental = futureRentals.find(r => r.id === id);
+    if (!rental) return;
+    
+    // Set customer name and equipment
+    document.getElementById('futureCustomerName').value = rental.customerName;
+    document.getElementById('futureEquipmentSelect').value = rental.equipmentId;
+    
+    // Pre-populate the selected dates array
+    selectedBookingDates = [];
+    const startDate = new Date(rental.date);
+    for (let i = 0; i < rental.days; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+        const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+        selectedBookingDates.push(dateStr);
+    }
+    
+    // Update button text and set editing mode
+    document.getElementById('futureRentalForm').querySelector('button').innerHTML = '💾 Update Booking';
+    editingFutureRentalId = id;
+    
+    // Show future bookings add section
+    showSection('futureBookingsAddSection');
+    
+    // Render the calendar with the selected dates
+    currentBookingCalendarDate = new Date(rental.date);
+    renderBookingCalendar();
+    updateSelectedDatesDisplay();
+}
 
         function deleteFutureRental(id) {
             if (!confirm('Delete this booking?')) return;
