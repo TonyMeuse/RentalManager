@@ -1486,34 +1486,44 @@
                 <h2>💰 Past Rentals</h2>
 
                 <div class="financial-summary">
-                    <div class="summary-card">
-                        <h3>💵 Financial Summary</h3>
-                        
-                        <div class="summary-row">
-                            <span class="summary-label">Total Collected:</span>
-                            <span class="summary-value" id="totalCollected">$0.00</span>
-                        </div>
-                        
-                        <div class="summary-row">
-                            <span class="summary-label">Total Paid:</span>
-                            <span class="summary-value" id="totalPaid">$0.00</span>
-                        </div>
-                        
-                        <div class="summary-row">
-                            <span class="summary-label">Add Payment:</span>
-                            <div class="paid-pot-input">
-                                <span style="font-size: 1.4em; font-weight: 700; margin-right: 5px;">$</span>
-                                <input type="number" id="paidPotInput" placeholder="0.00" min="0" step="0.01">
-                                <button class="btn-primary" onclick="savePaidPot()">💾 Save</button>
-                            </div>
-                        </div>
-                        
-                        <div class="summary-row" style="border-top: 3px solid #4CAF50; margin-top: 15px; padding-top: 20px;">
-                            <span class="summary-label">Remaining Balance:</span>
-                            <span class="summary-value positive" id="remainingBalance">$0.00</span>
-                        </div>
-                    </div>
-                </div>
+    <div class="summary-card">
+        <h3>💵 Financial Summary</h3>
+        
+        <div class="summary-row">
+            <span class="summary-label">Alex Collected:</span>
+            <span class="summary-value" id="alexCollected">$0.00</span>
+        </div>
+        
+        <div class="summary-row">
+            <span class="summary-label">Anthony Collected:</span>
+            <span class="summary-value" id="anthonyCollected">$0.00</span>
+        </div>
+        
+        <div class="summary-row" style="border-top: 2px solid #e0e0e0; margin-top: 10px; padding-top: 15px;">
+            <span class="summary-label">Total Collected:</span>
+            <span class="summary-value" id="totalCollected">$0.00</span>
+        </div>
+        
+        <div class="summary-row">
+            <span class="summary-label">Total Paid:</span>
+            <span class="summary-value" id="totalPaid">$0.00</span>
+        </div>
+        
+        <div class="summary-row">
+            <span class="summary-label">Add Payment:</span>
+            <div class="paid-pot-input">
+                <span style="font-size: 1.4em; font-weight: 700; margin-right: 5px;">$</span>
+                <input type="number" id="paidPotInput" placeholder="0.00" min="0" step="0.01">
+                <button class="btn-primary" onclick="savePaidPot()">💾 Save</button>
+            </div>
+        </div>
+        
+        <div class="summary-row" style="border-top: 3px solid #4CAF50; margin-top: 15px; padding-top: 20px;">
+            <span class="summary-label">Remaining Balance:</span>
+            <span class="summary-value positive" id="remainingBalance">$0.00</span>
+        </div>
+    </div>
+</div>
             </div>
         </div>
     </div>
@@ -2261,46 +2271,61 @@ if (sectionId === 'futureBookingsAddSection') {
         }
 
         function markPaid(id) {
-            if (!confirm('Mark this rental as paid?')) return;
+    if (!confirm('Mark this rental as paid?')) return;
 
-            const rental = rentalList.find(r => r.id === id);
-            if (!rental) return;
+    // Ask who collected the money
+    const collector = prompt('Who collected the money?\n\nType "Alex" or "Anthony"');
+    
+    if (!collector) {
+        alert('Collection cancelled - no collector specified');
+        return;
+    }
+    
+    const collectorName = collector.trim();
+    if (collectorName !== 'Alex' && collectorName !== 'Anthony') {
+        alert('Please enter either "Alex" or "Anthony"');
+        return;
+    }
 
-            const rentalDate = new Date(rental.date);
-            const monthKey = `${rentalDate.getFullYear()}-${String(rentalDate.getMonth() + 1).padStart(2, '0')}`;
-            
-            const equipment = equipmentList.find(e => e.id === rental.equipmentId);
-            const totalCost = equipment ? equipment.price * rental.days : 0;
+    const rental = rentalList.find(r => r.id === id);
+    if (!rental) return;
 
-            const pastRental = {
-                customerName: rental.customerName,
-                equipmentId: rental.equipmentId,
-                days: rental.days,
-                date: rental.date,
-                totalCost: totalCost,
-                paid: false  // Customer hasn't paid yet
-            };
+    const rentalDate = new Date(rental.date);
+    const monthKey = `${rentalDate.getFullYear()}-${String(rentalDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+    const totalCost = equipment ? equipment.price * rental.days : 0;
 
-            updateSyncStatus('syncing');
+    const pastRental = {
+        customerName: rental.customerName,
+        equipmentId: rental.equipmentId,
+        days: rental.days,
+        date: rental.date,
+        totalCost: totalCost,
+        paid: false,  // Customer hasn't paid yet
+        collectedBy: collectorName  // NEW: Track who collected
+    };
 
-            db.collection('pastRentals').doc(monthKey).get()
-                .then(doc => {
-                    const rentals = doc.exists ? (doc.data().rentals || []) : [];
-                    rentals.push(pastRental);
-                    return db.collection('pastRentals').doc(monthKey).set({ rentals });
-                })
-                .then(() => {
-                    return db.collection('rentals').doc(id).delete();
-                })
-                .then(() => {
-                    updateSyncStatus('synced');
-                })
-                .catch(error => {
-                    console.error('Error marking rental as paid:', error);
-                    alert('Error marking rental as paid');
-                    updateSyncStatus('error');
-                });
-        }
+    updateSyncStatus('syncing');
+
+    db.collection('pastRentals').doc(monthKey).get()
+        .then(doc => {
+            const rentals = doc.exists ? (doc.data().rentals || []) : [];
+            rentals.push(pastRental);
+            return db.collection('pastRentals').doc(monthKey).set({ rentals });
+        })
+        .then(() => {
+            return db.collection('rentals').doc(id).delete();
+        })
+        .then(() => {
+            updateSyncStatus('synced');
+        })
+        .catch(error => {
+            console.error('Error marking rental as paid:', error);
+            alert('Error marking rental as paid');
+            updateSyncStatus('error');
+        });
+}
 
         function renderRentalTable() {
             const tbody = document.querySelector('#rentalTable tbody');
@@ -2486,64 +2511,77 @@ for (let i = 0; i < rental.days; i++) {
                 });
         }
 
-        function confirmFutureRental(id) {
-            if (!confirm('Confirm this booking and move to current rentals?')) return;
+    function confirmFutureRental(id) {
+    if (!confirm('Confirm this booking and move to current rentals?')) return;
 
-            const rental = futureRentals.find(r => r.id === id);
-            if (!rental) return;
+    // Ask who collected the money
+    const collector = prompt('Who collected the money?\n\nType "Alex" or "Anthony"');
+    
+    if (!collector) {
+        alert('Collection cancelled - no collector specified');
+        return;
+    }
+    
+    const collectorName = collector.trim();
+    if (collectorName !== 'Alex' && collectorName !== 'Anthony') {
+        alert('Please enter either "Alex" or "Anthony"');
+        return;
+    }
 
-            updateSyncStatus('syncing');
+    const rental = futureRentals.find(r => r.id === id);
+    if (!rental) return;
 
-            const rentalData = {
-                customerName: rental.customerName,
-                equipmentId: rental.equipmentId,
-                days: rental.days,
-                date: rental.date
-            };
+    updateSyncStatus('syncing');
 
-            // Remove from local array immediately for instant UI update
-            futureRentals = futureRentals.filter(r => r.id !== id);
-            
-            // Refresh views immediately
-            const calendarSection = document.getElementById('futureBookingsCalendarSection');
-            const tomorrowSection = document.getElementById('futureBookingsTomorrowSection');
-            
+    const rentalData = {
+        customerName: rental.customerName,
+        equipmentId: rental.equipmentId,
+        days: rental.days,
+        date: rental.date,
+        collectedBy: collectorName  // NEW: Track who collected
+    };
+
+    // Remove from local array immediately for instant UI update
+    futureRentals = futureRentals.filter(r => r.id !== id);
+    
+    // Refresh views immediately
+    const calendarSection = document.getElementById('futureBookingsCalendarSection');
+    const tomorrowSection = document.getElementById('futureBookingsTomorrowSection');
+    
+    if (calendarSection && calendarSection.classList.contains('active')) {
+        renderCalendar();
+        if (selectedDate) {
+            const [year, month, day] = selectedDate.split('-').map(Number);
+            selectDate(year, month - 1, day);
+        }
+    }
+    if (tomorrowSection && tomorrowSection.classList.contains('active')) {
+        renderTomorrowBookings();
+    }
+
+    // Now update Firebase
+    db.collection('rentals').add(rentalData)
+        .then(() => {
+            return db.collection('futureRentals').doc(id).delete();
+        })
+        .then(() => {
+            updateSyncStatus('synced');
+        })
+        .catch(error => {
+            console.error('Error confirming future rental:', error);
+            alert('Error confirming booking');
+            updateSyncStatus('error');
+            // If error, add back to local array
+            futureRentals.push(rental);
+            // Re-render views
             if (calendarSection && calendarSection.classList.contains('active')) {
                 renderCalendar();
-                // If viewing a specific date, refresh that too
-                if (selectedDate) {
-                    const [year, month, day] = selectedDate.split('-').map(Number);
-                    selectDate(year, month - 1, day);
-                }
             }
             if (tomorrowSection && tomorrowSection.classList.contains('active')) {
                 renderTomorrowBookings();
             }
-
-            // Now update Firebase
-            db.collection('rentals').add(rentalData)
-                .then(() => {
-                    return db.collection('futureRentals').doc(id).delete();
-                })
-                .then(() => {
-                    updateSyncStatus('synced');
-                })
-                .catch(error => {
-                    console.error('Error confirming future rental:', error);
-                    alert('Error confirming booking');
-                    updateSyncStatus('error');
-                    // If error, add back to local array
-                    futureRentals.push(rental);
-                    // Re-render views
-                    if (calendarSection && calendarSection.classList.contains('active')) {
-                        renderCalendar();
-                    }
-                    if (tomorrowSection && tomorrowSection.classList.contains('active')) {
-                        renderTomorrowBookings();
-                    }
-                });
-        }
-
+        });
+}
         function resetFutureRentalForm() {
     document.getElementById('futureCustomerName').value = '';
     document.getElementById('futureEquipmentSelect').value = '';
@@ -2755,28 +2793,40 @@ function updateEquipmentAvailability() {
         }
 
         function renderPastRentals() {
-            // Calculate total collected from ALL past rentals
-            let totalCollected = 0;
-            
-            for (const month in pastRentals) {
-                const monthData = pastRentals[month];
-                if (monthData.rentals) {
-                    monthData.rentals.forEach(rental => {
-                        const equipment = equipmentList.find(e => e.id === rental.equipmentId);
-                        const cost = rental.totalCost || (equipment ? equipment.price * rental.days : 0);
-                        totalCollected += cost;
-                    });
+    // Calculate totals for each collector
+    let alexCollected = 0;
+    let anthonyCollected = 0;
+    
+    for (const month in pastRentals) {
+        const monthData = pastRentals[month];
+        if (monthData.rentals) {
+            monthData.rentals.forEach(rental => {
+                const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+                const cost = rental.totalCost || (equipment ? equipment.price * rental.days : 0);
+                
+                // Add to the appropriate collector's total
+                if (rental.collectedBy === 'Alex') {
+                    alexCollected += cost;
+                } else if (rental.collectedBy === 'Anthony') {
+                    anthonyCollected += cost;
                 }
-            }
-            
-            // Update display
-            document.getElementById('totalCollected').textContent = `$${totalCollected.toFixed(2)}`;
-            document.getElementById('totalPaid').textContent = `$${(window.currentPaidPot || 0).toFixed(2)}`;
-            window.currentTotalCollected = totalCollected;
-            
-            // Calculate remaining
-            calculateRemaining();
+            });
         }
+    }
+    
+    const totalCollected = alexCollected + anthonyCollected;
+    
+    // Update display
+    document.getElementById('totalCollected').textContent = `$${totalCollected.toFixed(2)}`;
+    document.getElementById('alexCollected').textContent = `$${alexCollected.toFixed(2)}`;
+    document.getElementById('anthonyCollected').textContent = `$${anthonyCollected.toFixed(2)}`;
+    document.getElementById('totalPaid').textContent = `$${(window.currentPaidPot || 0).toFixed(2)}`;
+    window.currentTotalCollected = totalCollected;
+    
+    // Calculate remaining
+    calculateRemaining();
+}
+            
 
         function calculateRemaining() {
             const totalCollected = window.currentTotalCollected || 0;
