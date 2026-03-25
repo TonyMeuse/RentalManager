@@ -1171,7 +1171,7 @@
             display: block;
         }
 
-        #infoMenu, #availabilityModal {
+       #infoMenu, #availabilityModal, #collectorModal {
             display: none;
             position: fixed;
             top: 50%;
@@ -1187,7 +1187,7 @@
             overflow-y: auto;
         }
 
-        #infoMenu.active, #availabilityModal.active {
+        #infoMenu.active, #availabilityModal.active, #collectorModal.active {
             display: block;
         }
 
@@ -1558,7 +1558,24 @@
                 </div>
             </div>
         </div>
+        </div>
         <button class="btn-danger" onclick="closeAvailabilityModal()" style="width: 100%; margin-top: 20px;">Close</button>
+    </div>
+
+    <!-- Collector Selection Modal -->
+    <div id="collectorModal">
+        <h3>Who collected the money?</h3>
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <button class="btn-primary" onclick="selectCollector('Alex')" style="flex: 1; font-size: 18px; padding: 20px;">
+                Alex
+            </button>
+            <button class="btn-secondary" onclick="selectCollector('Anthony')" style="flex: 1; font-size: 18px; padding: 20px;">
+                Anthony
+            </button>
+        </div>
+        <button class="btn-danger" onclick="closeCollectorModal()" style="width: 100%; margin-top: 20px;">
+            Cancel
+        </button>
     </div>
 
     <!-- Sync Status Indicator -->
@@ -2270,62 +2287,77 @@ if (sectionId === 'futureBookingsAddSection') {
             editingRentalId = null;
         }
 
-        function markPaid(id) {
-    if (!confirm('Mark this rental as paid?')) return;
+        // ===========================================
+        // COLLECTOR SELECTION MODAL
+        // ===========================================
+        
+        let pendingRentalId = null;
 
-    // Ask who collected the money
-    const collector = prompt('Who collected the money?\n\nType "Alex" or "Anthony"');
-    
-    if (!collector) {
-        alert('Collection cancelled - no collector specified');
-        return;
-    }
-    
-    const collectorName = collector.trim();
-    if (collectorName !== 'Alex' && collectorName !== 'Anthony') {
-        alert('Please enter either "Alex" or "Anthony"');
-        return;
-    }
+        function showCollectorModal(rentalId) {
+            pendingRentalId = rentalId;
+            document.getElementById('collectorModal').classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+        }
 
-    const rental = rentalList.find(r => r.id === id);
-    if (!rental) return;
+        function closeCollectorModal() {
+            pendingRentalId = null;
+            document.getElementById('collectorModal').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
 
-    const rentalDate = new Date(rental.date);
-    const monthKey = `${rentalDate.getFullYear()}-${String(rentalDate.getMonth() + 1).padStart(2, '0')}`;
-    
-    const equipment = equipmentList.find(e => e.id === rental.equipmentId);
-    const totalCost = equipment ? equipment.price * rental.days : 0;
+        function selectCollector(collectorName) {
+            if (!pendingRentalId) return;
+            
+            const rental = rentalList.find(r => r.id === pendingRentalId);
+            if (!rental) {
+                closeCollectorModal();
+                return;
+            }
 
-    const pastRental = {
-        customerName: rental.customerName,
-        equipmentId: rental.equipmentId,
-        days: rental.days,
-        date: rental.date,
-        totalCost: totalCost,
-        paid: false,  // Customer hasn't paid yet
-        collectedBy: collectorName  // NEW: Track who collected
-    };
+            const rentalDate = new Date(rental.date);
+            const monthKey = `${rentalDate.getFullYear()}-${String(rentalDate.getMonth() + 1).padStart(2, '0')}`;
+            
+            const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+            const totalCost = equipment ? equipment.price * rental.days : 0;
 
-    updateSyncStatus('syncing');
+            const pastRental = {
+                customerName: rental.customerName,
+                equipmentId: rental.equipmentId,
+                days: rental.days,
+                date: rental.date,
+                totalCost: totalCost,
+                paid: false,
+                collectedBy: collectorName
+            };
 
-    db.collection('pastRentals').doc(monthKey).get()
-        .then(doc => {
-            const rentals = doc.exists ? (doc.data().rentals || []) : [];
-            rentals.push(pastRental);
-            return db.collection('pastRentals').doc(monthKey).set({ rentals });
-        })
-        .then(() => {
-            return db.collection('rentals').doc(id).delete();
-        })
-        .then(() => {
-            updateSyncStatus('synced');
-        })
-        .catch(error => {
-            console.error('Error marking rental as paid:', error);
-            alert('Error marking rental as paid');
-            updateSyncStatus('error');
-        });
-}
+            updateSyncStatus('syncing');
+            closeCollectorModal();
+
+            db.collection('pastRentals').doc(monthKey).get()
+                .then(doc => {
+                    const rentals = doc.exists ? (doc.data().rentals || []) : [];
+                    rentals.push(pastRental);
+                    return db.collection('pastRentals').doc(monthKey).set({ rentals });
+                })
+                .then(() => {
+                    return db.collection('rentals').doc(pendingRentalId).delete();
+                })
+                .then(() => {
+                    updateSyncStatus('synced');
+                    pendingRentalId = null;
+                })
+                .catch(error => {
+                    console.error('Error marking rental as paid:', error);
+                    alert('Error marking rental as paid');
+                    updateSyncStatus('error');
+                    pendingRentalId = null;
+                });
+        }
+
+function markPaid(id) {
+            if (!confirm('Mark this rental as paid?')) return;
+            showCollectorModal(id);
+        }
 
         function renderRentalTable() {
             const tbody = document.querySelector('#rentalTable tbody');
@@ -2514,20 +2546,6 @@ for (let i = 0; i < rental.days; i++) {
     function confirmFutureRental(id) {
     if (!confirm('Confirm this booking and move to current rentals?')) return;
 
-    // Ask who collected the money
-    const collector = prompt('Who collected the money?\n\nType "Alex" or "Anthony"');
-    
-    if (!collector) {
-        alert('Collection cancelled - no collector specified');
-        return;
-    }
-    
-    const collectorName = collector.trim();
-    if (collectorName !== 'Alex' && collectorName !== 'Anthony') {
-        alert('Please enter either "Alex" or "Anthony"');
-        return;
-    }
-
     const rental = futureRentals.find(r => r.id === id);
     if (!rental) return;
 
@@ -2537,8 +2555,7 @@ for (let i = 0; i < rental.days; i++) {
         customerName: rental.customerName,
         equipmentId: rental.equipmentId,
         days: rental.days,
-        date: rental.date,
-        collectedBy: collectorName  // NEW: Track who collected
+        date: rental.date
     };
 
     // Remove from local array immediately for instant UI update
@@ -2582,6 +2599,7 @@ for (let i = 0; i < rental.days; i++) {
             }
         });
 }
+        
         function resetFutureRentalForm() {
     document.getElementById('futureCustomerName').value = '';
     document.getElementById('futureEquipmentSelect').value = '';
@@ -3212,9 +3230,10 @@ function updateEquipmentAvailability() {
             document.getElementById('overlay').classList.remove('active');
         }
 
-        function closeModals() {
+       function closeModals() {
             closeInfoMenu();
             closeAvailabilityModal();
+            closeCollectorModal();
         }
 
         function changeAvailabilityMonth(direction) {
