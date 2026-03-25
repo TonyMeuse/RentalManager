@@ -578,6 +578,19 @@
             border-color: #4CAF50;
         }
 
+        /* ADD THIS NEW RULE: */
+        .calendar-day.booked {
+            background: #ffebee;
+            color: #999;
+            cursor: not-allowed;
+            border-color: #ffcdd2;
+        }
+
+        .calendar-day.booked:hover {
+            background: #ffebee;
+            transform: none;
+        }
+
         .calendar-day.has-bookings::after {
             content: '';
             position: absolute;
@@ -2033,6 +2046,10 @@ if (sectionId === 'pastRentalsSection') {
 if (sectionId === 'futureBookingsAddSection') {
     currentBookingCalendarDate = new Date();
     renderBookingCalendar();
+    
+    // Add event listener to equipment dropdown
+    const equipmentSelect = document.getElementById('futureEquipmentSelect');
+    equipmentSelect.onchange = updateEquipmentAvailability;
 }
             }
         }
@@ -2542,6 +2559,7 @@ for (let i = 0; i < rental.days; i++) {
 
 let currentBookingCalendarDate = new Date();
 let selectedBookingDates = [];
+let equipmentBookedDates = new Set(); // Add this new line
 
 function renderBookingCalendar() {
     const year = currentBookingCalendarDate.getFullYear();
@@ -2594,13 +2612,19 @@ function renderBookingCalendar() {
             dayCell.classList.add('today');
         }
         
-        // Check if this date is already selected
-        if (selectedBookingDates.includes(dateStr)) {
-            dayCell.classList.add('selected');
+        // Check if this date is already booked for the selected equipment
+        if (equipmentBookedDates.has(dateStr)) {
+            dayCell.classList.add('booked');
+            dayCell.onclick = null; // Make it unclickable
+        } else {
+            // Check if this date is already selected
+            if (selectedBookingDates.includes(dateStr)) {
+                dayCell.classList.add('selected');
+            }
+            
+            // Add click handler
+            dayCell.onclick = () => toggleBookingDate(dateStr);
         }
-        
-        // Add click handler
-        dayCell.onclick = () => toggleBookingDate(dateStr);
         
         grid.appendChild(dayCell);
     }
@@ -2643,6 +2667,44 @@ function updateSelectedDatesDisplay() {
 function changeBookingMonth(direction) {
     currentBookingCalendarDate.setDate(1);
     currentBookingCalendarDate.setMonth(currentBookingCalendarDate.getMonth() + direction);
+    renderBookingCalendar();
+}
+
+// ADD THIS NEW FUNCTION HERE:
+function updateEquipmentAvailability() {
+    const equipmentId = document.getElementById('futureEquipmentSelect').value;
+    
+    // Clear previous booked dates
+    equipmentBookedDates.clear();
+    
+    if (!equipmentId) {
+        // No equipment selected, show all dates as available
+        renderBookingCalendar();
+        return;
+    }
+    
+    // Get all bookings for this equipment
+    const equipmentBookings = futureRentals.filter(rental => 
+        rental.equipmentId === equipmentId && rental.id !== editingFutureRentalId
+    );
+    
+    // Calculate all booked dates
+    equipmentBookings.forEach(booking => {
+        // Parse date string to avoid timezone issues
+        const [year, month, day] = booking.date.split('-').map(Number);
+        const startDate = new Date(year, month - 1, day);
+        const days = booking.days;
+        
+        // Add all days in the booking range
+        for (let i = 0; i < days; i++) {
+            const currentDate = new Date(startDate);
+            currentDate.setDate(startDate.getDate() + i);
+            const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+            equipmentBookedDates.add(dateStr);
+        }
+    });
+    
+    // Re-render calendar with updated availability
     renderBookingCalendar();
 }
 
