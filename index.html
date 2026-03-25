@@ -2394,10 +2394,12 @@ if (sectionId === 'futureBookingsAddSection') {
     document.getElementById('futureCustomerName').value = rental.customerName;
     document.getElementById('futureEquipmentSelect').value = rental.equipmentId;
     
-    // Pre-populate the selected dates array
-    selectedBookingDates = [];
-    const startDate = new Date(rental.date);
-    for (let i = 0; i < rental.days; i++) {
+   // Pre-populate the selected dates array
+selectedBookingDates = [];
+// Parse date string to avoid timezone issues
+const [year, month, day] = rental.date.split('-').map(Number);
+const startDate = new Date(year, month - 1, day);
+for (let i = 0; i < rental.days; i++) {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + i);
         const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
@@ -2412,7 +2414,7 @@ if (sectionId === 'futureBookingsAddSection') {
     showSection('futureBookingsAddSection');
     
     // Render the calendar with the selected dates
-    currentBookingCalendarDate = new Date(rental.date);
+    currentBookingCalendarDate = new Date(startDate);
     renderBookingCalendar();
     updateSelectedDatesDisplay();
 }
@@ -3195,7 +3197,7 @@ function changeBookingMonth(direction) {
         
         // Set default date to today
         document.getElementById('rentalDate').valueAsDate = new Date();
-        document.getElementById('futureRentalDate').valueAsDate = new Date();
+      
     </script>
 </body>
 </html>
