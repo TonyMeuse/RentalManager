@@ -2071,8 +2071,16 @@ if (sectionId === 'pastRentalsSection') {
 
 // Load booking calendar when opening add booking section
 if (sectionId === 'futureBookingsAddSection') {
+    // Reset the form completely when opening Add Booking
+    document.getElementById('futureCustomerName').value = '';
+    document.getElementById('futureEquipmentSelect').value = '';
+    document.getElementById('futureRentalForm').querySelector('button').innerHTML = '➕ Add Booking';
+    editingFutureRentalId = null;
+    selectedBookingDates = [];
+    
     currentBookingCalendarDate = new Date();
     renderBookingCalendar();
+    updateSelectedDatesDisplay();
     
     // Add event listener to equipment dropdown
     const equipmentSelect = document.getElementById('futureEquipmentSelect');
@@ -2405,7 +2413,7 @@ function markPaid(id) {
         // FUTURE RENTALS MANAGEMENT
         // ===========================================
         
-     function addFutureRental(event) {
+    function addFutureRental(event) {
     event.preventDefault();
     const customerName = document.getElementById('futureCustomerName').value.trim();
     const equipmentId = document.getElementById('futureEquipmentSelect').value;
