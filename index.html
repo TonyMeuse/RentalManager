@@ -2076,7 +2076,7 @@ if (sectionId === 'futureBookingsAddSection') {
     // Reset the form completely when opening Add Booking
     document.getElementById('futureCustomerName').value = '';
     document.getElementById('futureEquipmentSelect').value = '';
-    document.getElementById('futureRentalForm').querySelector('button').innerHTML = '➕ Add Booking';
+    document.getElementById('futureRentalForm').querySelector('button[type="submit"]').innerHTML = '➕ Add Booking';
     editingFutureRentalId = null;
     selectedBookingDates = [];
     equipmentBookedDates.clear(); // Clear booked dates when opening
@@ -2474,7 +2474,7 @@ for (let i = 0; i < rental.days; i++) {
     }
     
     // Update button text and set editing mode
-    document.getElementById('futureRentalForm').querySelector('button').innerHTML = '💾 Update Booking';
+  document.getElementById('futureRentalForm').querySelector('button[type="submit"]').innerHTML = '💾 Update Booking';
     editingFutureRentalId = id;
     
     // Show future bookings add section
@@ -2596,7 +2596,7 @@ for (let i = 0; i < rental.days; i++) {
         function resetFutureRentalForm() {
     document.getElementById('futureCustomerName').value = '';
     document.getElementById('futureEquipmentSelect').value = '';
-    document.getElementById('futureRentalForm').querySelector('button').innerHTML = '➕ Add Booking';
+   document.getElementById('futureRentalForm').querySelector('button[type="submit"]').innerHTML = '➕ Add Booking';
     editingFutureRentalId = null;
     selectedBookingDates = [];
     updateSelectedDatesDisplay();
