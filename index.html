@@ -2026,8 +2026,13 @@
         // ===========================================
         
         function showSection(sectionId) {
-            // Hide ALL sections by removing active class
-            const allSections = [
+    // Clear editing mode when returning to the bookings manager menu
+    if (sectionId === 'futureBookingsSection') {
+        editingFutureRentalId = null;
+    }
+    
+    // Hide ALL sections by removing active class
+    const allSections = [
                 'mainMenu', 
                 'equipmentSection', 
                 'futureBookingsSection',
