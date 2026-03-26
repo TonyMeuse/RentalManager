@@ -2414,6 +2414,7 @@ function savePaymentWithCollector(collectorName) {
         return;
     }
     
+    const amountToSave = pendingPaymentAmount; // Save it before closing modal
     updateSyncStatus('syncing');
     closePaymentCollectorModal();
     
@@ -2424,7 +2425,7 @@ function savePaymentWithCollector(collectorName) {
             
             // Add new payment
             payments.push({
-                amount: pendingPaymentAmount,
+                amount: amountToSave,
                 paidBy: collectorName,
                 date: new Date().toISOString()
             });
@@ -2433,16 +2434,14 @@ function savePaymentWithCollector(collectorName) {
         })
         .then(() => {
             updateSyncStatus('synced');
-            showAlert(`✅ Added $${pendingPaymentAmount.toFixed(2)} payment by ${collectorName}!`);
+            showAlert(`✅ Added $${amountToSave.toFixed(2)} payment by ${collectorName}!`);
             document.getElementById('paidPotInput').value = '';
-            pendingPaymentAmount = 0;
             renderPastRentals();
         })
         .catch(error => {
             console.error('Error saving payment:', error);
             alert('Error saving payment');
             updateSyncStatus('error');
-            pendingPaymentAmount = 0;
         });
 }
 
