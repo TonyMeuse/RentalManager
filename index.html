@@ -2740,12 +2740,17 @@ function updateEquipmentAvailability() {
         return;
     }
     
-    // Get all bookings for this equipment
+    // Get all FUTURE bookings for this equipment
     const equipmentBookings = futureRentals.filter(rental => 
         rental.equipmentId === equipmentId && rental.id !== editingFutureRentalId
     );
     
-    // Calculate all booked dates
+    // Get all CURRENT rentals for this equipment
+    const currentRentals = rentalList.filter(rental => 
+        rental.equipmentId === equipmentId
+    );
+    
+    // Calculate all booked dates from FUTURE bookings
     equipmentBookings.forEach(booking => {
         // Parse date string to avoid timezone issues
         const [year, month, day] = booking.date.split('-').map(Number);
@@ -2761,10 +2766,25 @@ function updateEquipmentAvailability() {
         }
     });
     
+    // Calculate all booked dates from CURRENT rentals
+    currentRentals.forEach(rental => {
+        // Parse date string to avoid timezone issues
+        const [year, month, day] = rental.date.split('-').map(Number);
+        const startDate = new Date(year, month - 1, day);
+        const days = rental.days;
+        
+        // Add all days in the rental range
+        for (let i = 0; i < days; i++) {
+            const currentDate = new Date(startDate);
+            currentDate.setDate(startDate.getDate() + i);
+            const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+            equipmentBookedDates.add(dateStr);
+        }
+    });
+    
     // Re-render calendar with updated availability
     renderBookingCalendar();
 }
-
         function renderFutureRentalsTable() {
             const tbody = document.querySelector('#futureRentalsTable tbody');
             tbody.innerHTML = '';
