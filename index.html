@@ -2479,6 +2479,9 @@ for (let i = 0; i < rental.days; i++) {
     
     // Show future bookings add section
     showSection('futureBookingsAddSection');
+
+    // Update equipment availability to grey out booked dates
+updateEquipmentAvailability();
     
     // Render the calendar with the selected dates
     currentBookingCalendarDate = new Date(startDate);
