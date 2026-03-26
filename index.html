@@ -2336,53 +2336,61 @@ if (sectionId === 'futureBookingsAddSection') {
         }
 
         function selectCollector(collectorName) {
-            if (!pendingRentalId) return;
-            
-            const rental = rentalList.find(r => r.id === pendingRentalId);
-            if (!rental) {
-                closeCollectorModal();
-                return;
-            }
+    if (!pendingRentalId) {
+        alert('Error: No rental ID found');
+        closeCollectorModal();
+        return;
+    }
+    
+    const rental = rentalList.find(r => r.id === pendingRentalId);
+    if (!rental) {
+        alert('Error: Rental not found');
+        closeCollectorModal();
+        return;
+    }
 
-            const rentalDate = new Date(rental.date);
-            const monthKey = `${rentalDate.getFullYear()}-${String(rentalDate.getMonth() + 1).padStart(2, '0')}`;
-            
-            const equipment = equipmentList.find(e => e.id === rental.equipmentId);
-            const totalCost = equipment ? equipment.price * rental.days : 0;
+    // Parse date string to avoid timezone issues
+    const [year, month, day] = rental.date.split('-').map(Number);
+    const rentalDate = new Date(year, month - 1, day);
+    const monthKey = `${rentalDate.getFullYear()}-${String(rentalDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+    const totalCost = equipment ? equipment.price * rental.days : 0;
 
-            const pastRental = {
-                customerName: rental.customerName,
-                equipmentId: rental.equipmentId,
-                days: rental.days,
-                date: rental.date,
-                totalCost: totalCost,
-                paid: false,
-                collectedBy: collectorName
-            };
+    const pastRental = {
+        customerName: rental.customerName,
+        equipmentId: rental.equipmentId,
+        days: rental.days,
+        date: rental.date,
+        totalCost: totalCost,
+        paid: false,
+        collectedBy: collectorName
+    };
 
-            updateSyncStatus('syncing');
-            closeCollectorModal();
+    const rentalIdToDelete = pendingRentalId; // Save ID before closing modal
+    updateSyncStatus('syncing');
+    closeCollectorModal();
 
-            db.collection('pastRentals').doc(monthKey).get()
-                .then(doc => {
-                    const rentals = doc.exists ? (doc.data().rentals || []) : [];
-                    rentals.push(pastRental);
-                    return db.collection('pastRentals').doc(monthKey).set({ rentals });
-                })
-                .then(() => {
-                    return db.collection('rentals').doc(pendingRentalId).delete();
-                })
-                .then(() => {
-                    updateSyncStatus('synced');
-                    pendingRentalId = null;
-                })
-                .catch(error => {
-                    console.error('Error marking rental as paid:', error);
-                    alert('Error marking rental as paid');
-                    updateSyncStatus('error');
-                    pendingRentalId = null;
-                });
-        }
+    db.collection('pastRentals').doc(monthKey).get()
+        .then(doc => {
+            const rentals = doc.exists ? (doc.data().rentals || []) : [];
+            rentals.push(pastRental);
+            return db.collection('pastRentals').doc(monthKey).set({ rentals });
+        })
+        .then(() => {
+            return db.collection('rentals').doc(rentalIdToDelete).delete();
+        })
+        .then(() => {
+            updateSyncStatus('synced');
+            pendingRentalId = null;
+        })
+        .catch(error => {
+            console.error('Error marking rental as paid:', error);
+            alert('Error marking rental as paid: ' + error.message);
+            updateSyncStatus('error');
+            pendingRentalId = null;
+        });
+}
 
 function markPaid(id) {
             if (!confirm('Mark this rental as paid?')) return;
