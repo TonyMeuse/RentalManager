@@ -1191,6 +1191,24 @@
             display: block;
         }
 
+        #paymentCollectorModal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+    z-index: 1000;
+    max-width: 90%;
+}
+
+#paymentCollectorModal.active {
+    display: block;
+}
+
         #availabilityModal > h3 {
             color: #4CAF50;
             margin-bottom: 20px;
@@ -1478,7 +1496,7 @@
                 <button class="back-btn" onclick="showSection('mainMenu')">← Back to Menu</button>
                 <h2>💰 Past Rentals</h2>
 
-                <div class="financial-summary">
+            <div class="financial-summary">
     <div class="summary-card">
         <h3>💵 Financial Summary</h3>
         
@@ -1488,21 +1506,31 @@
         </div>
         
         <div class="summary-row">
+            <span class="summary-label">Alex Paid:</span>
+            <span class="summary-value" id="alexPaid">$0.00</span>
+        </div>
+        
+        <div class="summary-row" style="border-top: 2px solid #e0e0e0; margin-top: 10px; padding-top: 15px;">
+            <span class="summary-label">Alex Balance:</span>
+            <span class="summary-value positive" id="alexBalance">$0.00</span>
+        </div>
+        
+        <div class="summary-row" style="border-top: 2px solid #e0e0e0; margin-top: 20px; padding-top: 15px;">
             <span class="summary-label">Anthony Collected:</span>
             <span class="summary-value" id="anthonyCollected">$0.00</span>
         </div>
         
+        <div class="summary-row">
+            <span class="summary-label">Anthony Paid:</span>
+            <span class="summary-value" id="anthonyPaid">$0.00</span>
+        </div>
+        
         <div class="summary-row" style="border-top: 2px solid #e0e0e0; margin-top: 10px; padding-top: 15px;">
-            <span class="summary-label">Total Collected:</span>
-            <span class="summary-value" id="totalCollected">$0.00</span>
+            <span class="summary-label">Anthony Balance:</span>
+            <span class="summary-value positive" id="anthonyBalance">$0.00</span>
         </div>
         
-        <div class="summary-row">
-            <span class="summary-label">Total Paid:</span>
-            <span class="summary-value" id="totalPaid">$0.00</span>
-        </div>
-        
-        <div class="summary-row">
+        <div class="summary-row" style="border-top: 3px solid #4CAF50; margin-top: 20px; padding-top: 20px;">
             <span class="summary-label">Add Payment:</span>
             <div class="paid-pot-input">
                 <span style="font-size: 1.4em; font-weight: 700; margin-right: 5px;">$</span>
@@ -1512,11 +1540,12 @@
         </div>
         
         <div class="summary-row" style="border-top: 3px solid #4CAF50; margin-top: 15px; padding-top: 20px;">
-            <span class="summary-label">Remaining Balance:</span>
-            <span class="summary-value positive" id="remainingBalance">$0.00</span>
+            <span class="summary-label">Total Remaining Balance:</span>
+            <span class="summary-value positive" id="totalRemainingBalance">$0.00</span>
         </div>
     </div>
 </div>
+                
             </div>
         </div>
     </div>
@@ -1570,6 +1599,22 @@
             Cancel
         </button>
     </div>
+
+    <!-- Payment Collector Modal -->
+<div id="paymentCollectorModal">
+    <h3>Who made this payment?</h3>
+    <div style="display: flex; gap: 15px; margin-top: 30px;">
+        <button class="btn-primary" onclick="savePaymentWithCollector('Alex')" style="flex: 1; font-size: 18px; padding: 20px;">
+            Alex
+        </button>
+        <button class="btn-secondary" onclick="savePaymentWithCollector('Anthony')" style="flex: 1; font-size: 18px; padding: 20px;">
+            Anthony
+        </button>
+    </div>
+    <button class="btn-danger" onclick="closePaymentCollectorModal()" style="width: 100%; margin-top: 20px;">
+        Cancel
+    </button>
+</div>
 
     <!-- Sync Status Indicator -->
     <div class="sync-status" id="syncStatus">✓ Synced</div>
@@ -1675,8 +1720,9 @@
         let editingFutureRentalId = null;
 
         // Financial tracking
-        window.currentPaidPot = 0;
-        window.currentTotalCollected = 0;
+    window.currentPaidPot = 0;
+    window.currentTotalCollected = 0;
+    window.currentPayments = [];
 
         // ===========================================
         // AUTHENTICATION
@@ -1972,6 +2018,18 @@
                     }
                 })
             );
+
+            // Listen for payment changes
+        unsubscribeListeners.push(
+            db.collection('settings').doc('payments').onSnapshot(doc => {
+                if (doc.exists) {
+                    window.currentPayments = doc.data().payments || [];
+                } else {
+                    window.currentPayments = [];
+                }
+                renderPastRentals();
+            })
+        );
         }
 
         function unsubscribeAllListeners() {
@@ -2334,6 +2392,59 @@ if (sectionId === 'futureBookingsAddSection') {
             document.getElementById('collectorModal').classList.remove('active');
             document.getElementById('overlay').classList.remove('active');
         }
+
+        // Payment Collector Modal Functions
+let pendingPaymentAmount = 0;
+
+function showPaymentCollectorModal(amount) {
+    pendingPaymentAmount = amount;
+    document.getElementById('paymentCollectorModal').classList.add('active');
+    document.getElementById('overlay').classList.add('active');
+}
+
+function closePaymentCollectorModal() {
+    pendingPaymentAmount = 0;
+    document.getElementById('paymentCollectorModal').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
+}
+
+function savePaymentWithCollector(collectorName) {
+    if (pendingPaymentAmount <= 0) {
+        closePaymentCollectorModal();
+        return;
+    }
+    
+    updateSyncStatus('syncing');
+    closePaymentCollectorModal();
+    
+    // Load current payments
+    db.collection('settings').doc('payments').get()
+        .then(doc => {
+            const payments = doc.exists ? (doc.data().payments || []) : [];
+            
+            // Add new payment
+            payments.push({
+                amount: pendingPaymentAmount,
+                paidBy: collectorName,
+                date: new Date().toISOString()
+            });
+            
+            return db.collection('settings').doc('payments').set({ payments });
+        })
+        .then(() => {
+            updateSyncStatus('synced');
+            showAlert(`✅ Added $${pendingPaymentAmount.toFixed(2)} payment by ${collectorName}!`);
+            document.getElementById('paidPotInput').value = '';
+            pendingPaymentAmount = 0;
+            renderPastRentals();
+        })
+        .catch(error => {
+            console.error('Error saving payment:', error);
+            alert('Error saving payment');
+            updateSyncStatus('error');
+            pendingPaymentAmount = 0;
+        });
+}
 
         function selectCollector(collectorName) {
     if (!pendingRentalId) {
@@ -2882,7 +2993,7 @@ const currentRentals = rentalList.filter(rental =>
             select.value = currentValue;
         }
 
-        function renderPastRentals() {
+    function renderPastRentals() {
     // Calculate totals for each collector
     let alexCollected = 0;
     let anthonyCollected = 0;
@@ -2906,15 +3017,53 @@ const currentRentals = rentalList.filter(rental =>
     
     const totalCollected = alexCollected + anthonyCollected;
     
-    // Update display
-    document.getElementById('totalCollected').textContent = `$${totalCollected.toFixed(2)}`;
-    document.getElementById('alexCollected').textContent = `$${alexCollected.toFixed(2)}`;
-    document.getElementById('anthonyCollected').textContent = `$${anthonyCollected.toFixed(2)}`;
-    document.getElementById('totalPaid').textContent = `$${(window.currentPaidPot || 0).toFixed(2)}`;
-    window.currentTotalCollected = totalCollected;
+    // Calculate payments by each person
+    let alexPaid = 0;
+    let anthonyPaid = 0;
     
-    // Calculate remaining
-    calculateRemaining();
+    // Load payments from Firebase (will be set up in listener)
+    if (window.currentPayments) {
+        window.currentPayments.forEach(payment => {
+            if (payment.paidBy === 'Alex') {
+                alexPaid += payment.amount;
+            } else if (payment.paidBy === 'Anthony') {
+                anthonyPaid += payment.amount;
+            }
+        });
+    }
+    
+    const totalPaid = alexPaid + anthonyPaid;
+    
+    // Calculate individual balances
+    const alexBalance = alexCollected - alexPaid;
+    const anthonyBalance = anthonyCollected - anthonyPaid;
+    const totalBalance = alexBalance + anthonyBalance;
+    
+    // Update display
+    document.getElementById('alexCollected').textContent = `$${alexCollected.toFixed(2)}`;
+    document.getElementById('alexPaid').textContent = `$${alexPaid.toFixed(2)}`;
+    document.getElementById('alexBalance').textContent = `$${alexBalance.toFixed(2)}`;
+    
+    document.getElementById('anthonyCollected').textContent = `$${anthonyCollected.toFixed(2)}`;
+    document.getElementById('anthonyPaid').textContent = `$${anthonyPaid.toFixed(2)}`;
+    document.getElementById('anthonyBalance').textContent = `$${anthonyBalance.toFixed(2)}`;
+    
+    document.getElementById('totalRemainingBalance').textContent = `$${totalBalance.toFixed(2)}`;
+    
+    // Color code balances
+    const alexBalanceElement = document.getElementById('alexBalance');
+    alexBalanceElement.classList.remove('positive', 'negative');
+    alexBalanceElement.classList.add(alexBalance >= 0 ? 'positive' : 'negative');
+    
+    const anthonyBalanceElement = document.getElementById('anthonyBalance');
+    anthonyBalanceElement.classList.remove('positive', 'negative');
+    anthonyBalanceElement.classList.add(anthonyBalance >= 0 ? 'positive' : 'negative');
+    
+    const totalBalanceElement = document.getElementById('totalRemainingBalance');
+    totalBalanceElement.classList.remove('positive', 'negative');
+    totalBalanceElement.classList.add(totalBalance >= 0 ? 'positive' : 'negative');
+    
+    window.currentTotalCollected = totalCollected;
 }
             
 
@@ -2931,66 +3080,17 @@ const currentRentals = rentalList.filter(rental =>
             balanceElement.classList.add(remaining >= 0 ? 'positive' : 'negative');
         }
 
-        function savePaidPot() {
-            const newPayment = parseFloat(document.getElementById('paidPotInput').value) || 0;
-            
-            if (newPayment <= 0) {
-                alert('Please enter an amount greater than 0');
-                return;
-            }
-            
-            const currentPaidPot = window.currentPaidPot || 0;
-            const newTotal = currentPaidPot + newPayment;
-            
-            const totalCollected = window.currentTotalCollected || 0;
-            const remaining = totalCollected - newTotal;
-            
-            updateSyncStatus('syncing');
-            
-            // If remaining is zero or negative, reset everything automatically
-            if (remaining <= 0) {
-                // Delete all past rentals
-                const deletePromises = [];
-                for (const month in pastRentals) {
-                    deletePromises.push(db.collection('pastRentals').doc(month).delete());
-                }
-                deletePromises.push(db.collection('settings').doc('paidPot').set({ amount: 0 }));
-                
-                Promise.all(deletePromises)
-                    .then(() => {
-                        updateSyncStatus('synced');
-                        showAlert('✅ Balance settled! Reset to $0');
-                        document.getElementById('paidPotInput').value = '';
-                        window.currentPaidPot = 0;
-                        pastRentals = {};
-                        renderPastRentals();
-                    })
-                    .catch(error => {
-                        console.error('Error resetting:', error);
-                        alert('Error resetting');
-                        updateSyncStatus('error');
-                    });
-            } else {
-                // Save the new cumulative total
-                db.collection('settings').doc('paidPot').set({ amount: newTotal })
-                    .then(() => {
-                        updateSyncStatus('synced');
-                        showAlert(`✅ Added $${newPayment.toFixed(2)}!`);
-                        // Clear input field
-                        document.getElementById('paidPotInput').value = '';
-                        // Update local state
-                        window.currentPaidPot = newTotal;
-                        // Update display
-                        document.getElementById('totalPaid').textContent = `$${newTotal.toFixed(2)}`;
-                        calculateRemaining();
-                    })
-                    .catch(error => {
-                        console.error('Error saving:', error);
-                        alert('Error saving');
-                        updateSyncStatus('error');
-                    });
-            }
-        }
+       function savePaidPot() {
+    const newPayment = parseFloat(document.getElementById('paidPotInput').value) || 0;
+    
+    if (newPayment <= 0) {
+        alert('Please enter an amount greater than 0');
+        return;
+    }
+    
+    // Show modal to select who made the payment
+    showPaymentCollectorModal(newPayment);
+}
 
         function removePastRental(month, index) {
             if (!confirm('Remove this past rental?')) return;
@@ -3302,11 +3402,12 @@ const row = document.createElement('tr');
             document.getElementById('overlay').classList.remove('active');
         }
 
-       function closeModals() {
-            closeInfoMenu();
-            closeAvailabilityModal();
-            closeCollectorModal();
-        }
+      function closeModals() {
+    closeInfoMenu();
+    closeAvailabilityModal();
+    closeCollectorModal();
+    closePaymentCollectorModal();
+}
 
         function changeAvailabilityMonth(direction) {
             // Set to first day of month to prevent overflow issues
