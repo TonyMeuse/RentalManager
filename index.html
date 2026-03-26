@@ -2359,6 +2359,22 @@ function markPaid(id) {
             showCollectorModal(id);
         }
 
+        function deleteRental(id) {
+            if (!confirm('Delete this rental?')) return;
+
+            updateSyncStatus('syncing');
+            
+            db.collection('rentals').doc(id).delete()
+                .then(() => {
+                    updateSyncStatus('synced');
+                })
+                .catch(error => {
+                    console.error('Error deleting rental:', error);
+                    alert('Error deleting rental');
+                    updateSyncStatus('error');
+                });
+        }
+
         function renderRentalTable() {
             const tbody = document.querySelector('#rentalTable tbody');
             tbody.innerHTML = '';
@@ -2378,6 +2394,7 @@ function markPaid(id) {
                     <td class="actions">
                         <button class="btn-secondary" onclick="editRental('${rental.id}')">✏️ Edit</button>
                         <button class="btn-success" onclick="markPaid('${rental.id}')">✓ Mark Paid</button>
+                        <button class="btn-danger" onclick="deleteRental('${rental.id}')">🗑️ Delete</button>
                     </td>
                 `;
                 tbody.appendChild(row);
