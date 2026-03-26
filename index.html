@@ -1392,7 +1392,7 @@
                 <button class="back-btn" onclick="showSection('futureBookingsSection')">← Back to Bookings Manager</button>
                 <h2>➕ Add Booking</h2>
                 
-            <form id="futureRentalForm" onsubmit="addFutureRental(event)">
+          <form id="futureRentalForm" onsubmit="addFutureRental(event)">
     <input type="text" id="futureCustomerName" placeholder="Customer Name" required>
     <select id="futureEquipmentSelect" required>
         <option value="">Select Equipment</option>
@@ -1400,18 +1400,18 @@
     
     <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
         <p style="margin-bottom: 10px; font-weight: 600; color: #666;">Select Rental Dates (click to select/unselect):</p>
-        <div class="calendar-container" style="margin: 0; box-shadow: none;">
+        <div id="bookingCalendarContainer">
             <div class="calendar-header">
-                <button type="button" onclick="changeBookingMonth(-1)" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; margin: 0;">←</button>
-                <h3 id="bookingCalendarMonthYear" style="color: white; margin: 0;"></h3>
-                <button type="button" onclick="changeBookingMonth(1)" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; margin: 0;">→</button>
+                <button type="button" onclick="changeBookingMonth(-1)">←</button>
+                <h3 id="bookingCalendarMonthYear"></h3>
+                <button type="button" onclick="changeBookingMonth(1)">→</button>
             </div>
             <div class="calendar-grid" id="bookingCalendarGrid"></div>
         </div>
         <p id="selectedDatesDisplay" style="margin-top: 15px; font-size: 14px; color: #666;">No dates selected</p>
     </div>
     
-    <button type="submit" class="btn-primary" style="width: 100%; margin-top: 20px;">➕ Add Booking</button>
+    <button type="submit" class="btn-primary">➕ Add Booking</button>
 </form>
                 
             </div>
