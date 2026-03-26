@@ -3285,7 +3285,7 @@ const currentRentals = rentalList.filter(rental =>
                 const dayCell = document.createElement('div');
                 dayCell.className = 'calendar-day';
                 dayCell.textContent = day;
-                dayCell.onclick = () => selectDate(year, month, day);
+                dayCell.onclick = (e) => selectDate(year, month, day, e.target);
                 
                 // Highlight today
                 if (isCurrentMonth && day === todayDate) {
@@ -3312,65 +3312,69 @@ const currentRentals = rentalList.filter(rental =>
             selectedDate = null;
         }
 
-        function selectDate(year, month, day) {
-            selectedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+     function selectDate(year, month, day, eventTarget) {
+    selectedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    
+    // Update calendar UI
+    document.querySelectorAll('.calendar-day').forEach(cell => {
+        cell.classList.remove('selected');
+    });
+    
+    // Only highlight if we have an event target (when clicked directly)
+    if (eventTarget) {
+        eventTarget.classList.add('selected');
+    }
+    
+    // Show bookings for this date
+    const bookingsDiv = document.getElementById('selectedDateBookings');
+    const bookingsForDate = futureRentals.filter(rental => rental.date === selectedDate);
+    
+    if (bookingsForDate.length === 0) {
+        bookingsDiv.innerHTML = '<h3>No bookings for this date</h3>';
+    } else {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'];
+        bookingsDiv.innerHTML = `<h3>Bookings for ${monthNames[month]} ${day}, ${year}</h3>`;
+        
+        const table = document.createElement('div');
+        table.className = 'table-wrapper';
+        table.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Equipment</th>
+                        <th>Days</th>
+                        <th>Cost</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="selectedDateBookingsTable"></tbody>
+            </table>
+        `;
+        bookingsDiv.appendChild(table);
+        
+        const tbody = document.getElementById('selectedDateBookingsTable');
+        bookingsForDate.forEach(rental => {
+            const equipment = equipmentList.find(e => e.id === rental.equipmentId);
+            const totalCost = equipment ? (equipment.price * rental.days).toFixed(2) : 'N/A';
             
-            // Update calendar UI
-            document.querySelectorAll('.calendar-day').forEach(cell => {
-                cell.classList.remove('selected');
-            });
-            event.target.classList.add('selected');
-            
-            // Show bookings for this date
-            const bookingsDiv = document.getElementById('selectedDateBookings');
-            const bookingsForDate = futureRentals.filter(rental => rental.date === selectedDate);
-            
-            if (bookingsForDate.length === 0) {
-                bookingsDiv.innerHTML = '<h3>No bookings for this date</h3>';
-            } else {
-                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                                    'July', 'August', 'September', 'October', 'November', 'December'];
-                bookingsDiv.innerHTML = `<h3>Bookings for ${monthNames[month]} ${day}, ${year}</h3>`;
-                
-                const table = document.createElement('div');
-                table.className = 'table-wrapper';
-                table.innerHTML = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Customer</th>
-                                <th>Equipment</th>
-                                <th>Days</th>
-                                <th>Cost</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="selectedDateBookingsTable"></tbody>
-                    </table>
-                `;
-                bookingsDiv.appendChild(table);
-                
-                const tbody = document.getElementById('selectedDateBookingsTable');
-                bookingsForDate.forEach(rental => {
-                    const equipment = equipmentList.find(e => e.id === rental.equipmentId);
-                    const totalCost = equipment ? (equipment.price * rental.days).toFixed(2) : 'N/A';
-                    
-                  const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td data-label="Customer"><strong>${rental.customerName}</strong></td>
-                        <td data-label="Equipment">${equipment ? equipment.name : '<em>Deleted</em>'}</td>
-                        <td data-label="Days">${rental.days}</td>
-                        <td data-label="Cost"><strong>$${totalCost}</strong></td>
-                       <td class="actions">
-                            <button class="btn-secondary" onclick="editFutureRental('${rental.id}')">✏️ Edit</button>
-                            <button class="btn-danger" onclick="deleteFutureRental('${rental.id}')">🗑️ Delete</button>
-                            <button class="btn-success" onclick="confirmFutureRental('${rental.id}')">✓ Confirm</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            }
-        }
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td data-label="Customer"><strong>${rental.customerName}</strong></td>
+                <td data-label="Equipment">${equipment ? equipment.name : '<em>Deleted</em>'}</td>
+                <td data-label="Days">${rental.days}</td>
+                <td data-label="Cost"><strong>$${totalCost}</strong></td>
+                <td class="actions">
+                    <button class="btn-secondary" onclick="editFutureRental('${rental.id}')">✏️ Edit</button>
+                    <button class="btn-danger" onclick="deleteFutureRental('${rental.id}')">🗑️ Delete</button>
+                    <button class="btn-success" onclick="confirmFutureRental('${rental.id}')">✓ Confirm</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+}
 
         // ===========================================
         // TOMORROW'S BOOKINGS
