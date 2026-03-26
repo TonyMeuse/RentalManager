@@ -1905,7 +1905,7 @@
                                 rentalList[index] = data;
                             } else {
                                 rentalList.push(data);
-                                showAlert('New rental added by partner');
+                               // showAlert('New rental added by partner');
                             }
                         } else if (change.type === 'removed') {
                             rentalList = rentalList.filter(r => r.id !== change.doc.id);
@@ -1926,7 +1926,7 @@
                                 futureRentals[index] = data;
                             } else {
                                 futureRentals.push(data);
-                                showAlert('New booking added by partner');
+                                //showAlert('New booking added by partner');
                             }
                         } else if (change.type === 'removed') {
                             futureRentals = futureRentals.filter(r => r.id !== change.doc.id);
