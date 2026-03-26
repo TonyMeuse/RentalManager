@@ -1451,21 +1451,12 @@
                 </div>
             </div>
 
-            <!-- Current Rentals Section -->
-            <div id="currentRentalsSection" class="section-container">
-                <button class="back-btn" onclick="showSection('mainMenu')">← Back to Menu</button>
-                <h2>📋 Current Rentals</h2>
-                <form id="rentalForm" onsubmit="addRental(event)">
-                    <input type="text" id="customerName" placeholder="Customer Name" required>
-                    <select id="equipmentSelect" required>
-                        <option value="">Select Equipment</option>
-                    </select>
-                    <input type="number" id="rentalDays" placeholder="Rental Days" min="1" required>
-                    <input type="date" id="rentalDate" required>
-                    <button type="submit" class="btn-primary">➕ Add Rental</button>
-                </form>
-                
-                <div class="table-wrapper">
+           <!-- Current Rentals Section -->
+<div id="currentRentalsSection" class="section-container">
+    <button class="back-btn" onclick="showSection('mainMenu')">← Back to Menu</button>
+    <h2>📋 Current Rentals</h2>
+    
+    <div class="table-wrapper">
                     <table id="rentalTable">
                         <thead>
                             <tr>
