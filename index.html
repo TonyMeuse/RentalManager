@@ -3145,7 +3145,8 @@ function updateEquipmentAvailability() {
                         <td data-label="Equipment">${equipment ? equipment.name : '<em>Deleted</em>'}</td>
                         <td data-label="Days">${rental.days}</td>
                         <td data-label="Cost"><strong>$${totalCost}</strong></td>
-                        <td class="actions">
+                       <td class="actions">
+                            <button class="btn-secondary" onclick="editFutureRental('${rental.id}')">✏️ Edit</button>
                             <button class="btn-danger" onclick="deleteFutureRental('${rental.id}')">🗑️ Delete</button>
                             <button class="btn-success" onclick="confirmFutureRental('${rental.id}')">✓ Confirm</button>
                         </td>
@@ -3187,6 +3188,7 @@ const row = document.createElement('tr');
                     <td data-label="Days">${rental.days}</td>
                     <td data-label="Cost"><strong>$${totalCost}</strong></td>
                     <td class="actions">
+                        <button class="btn-secondary" onclick="editFutureRental('${rental.id}')">✏️ Edit</button>
                         <button class="btn-danger" onclick="deleteFutureRental('${rental.id}')">🗑️ Delete</button>
                         <button class="btn-success" onclick="confirmFutureRental('${rental.id}')">✓ Confirm</button>
                     </td>
