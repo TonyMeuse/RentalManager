@@ -1398,18 +1398,18 @@
         <option value="">Select Equipment</option>
     </select>
     
-    <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+  <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
         <p style="margin-bottom: 10px; font-weight: 600; color: #666;">Select Rental Dates (click to select/unselect):</p>
-        <div id="bookingCalendarContainer">
-            <div class="calendar-header">
-                <button type="button" onclick="changeBookingMonth(-1)">←</button>
-                <h3 id="bookingCalendarMonthYear"></h3>
-                <button type="button" onclick="changeBookingMonth(1)">→</button>
+        <div style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); border-radius: 10px; padding: 15px; margin-bottom: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button type="button" onclick="changeBookingMonth(-1)" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold;">←</button>
+                <h3 id="bookingCalendarMonthYear" style="color: white; margin: 0; font-size: 1.4em;"></h3>
+                <button type="button" onclick="changeBookingMonth(1)" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold;">→</button>
             </div>
             <div class="calendar-grid" id="bookingCalendarGrid"></div>
         </div>
         <p id="selectedDatesDisplay" style="margin-top: 15px; font-size: 14px; color: #666;">No dates selected</p>
-    </div>
+    </div>  
     
     <button type="submit" class="btn-primary">➕ Add Booking</button>
 </form>
