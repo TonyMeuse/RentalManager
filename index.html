@@ -2430,13 +2430,41 @@ function savePaymentWithCollector(collectorName) {
                 date: new Date().toISOString()
             });
             
-            return db.collection('settings').doc('payments').set({ payments });
-        })
-        .then(() => {
-            updateSyncStatus('synced');
-            showAlert(`✅ Added $${amountToSave.toFixed(2)} payment by ${collectorName}!`);
-            document.getElementById('paidPotInput').value = '';
-            renderPastRentals();
+            // Calculate new total paid
+            let totalPaid = 0;
+            payments.forEach(p => totalPaid += p.amount);
+            
+            // Calculate total collected
+            const totalCollected = window.currentTotalCollected || 0;
+            const remaining = totalCollected - totalPaid;
+            
+            // If balance is zero or negative, reset everything
+            if (remaining <= 0) {
+                const deletePromises = [];
+                for (const month in pastRentals) {
+                    deletePromises.push(db.collection('pastRentals').doc(month).delete());
+                }
+                deletePromises.push(db.collection('settings').doc('payments').delete());
+                
+                return Promise.all(deletePromises)
+                    .then(() => {
+                        updateSyncStatus('synced');
+                        showAlert('✅ Balance settled! Reset to $0');
+                        document.getElementById('paidPotInput').value = '';
+                        pastRentals = {};
+                        window.currentPayments = [];
+                        renderPastRentals();
+                    });
+            } else {
+                // Save payment normally
+                return db.collection('settings').doc('payments').set({ payments })
+                    .then(() => {
+                        updateSyncStatus('synced');
+                        showAlert(`✅ Added $${amountToSave.toFixed(2)} payment by ${collectorName}!`);
+                        document.getElementById('paidPotInput').value = '';
+                        renderPastRentals();
+                    });
+            }
         })
         .catch(error => {
             console.error('Error saving payment:', error);
