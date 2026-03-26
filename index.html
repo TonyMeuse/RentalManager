@@ -2076,9 +2076,10 @@
         
         function showSection(sectionId) {
     // Clear editing mode when returning to the bookings manager menu
-    if (sectionId === 'futureBookingsSection') {
-        editingFutureRentalId = null;
-    }
+if (sectionId === 'futureBookingsSection') {
+    editingFutureRentalId = null;
+    editingRentalId = null;
+}
     
     // Hide ALL sections by removing active class
     const allSections = [
