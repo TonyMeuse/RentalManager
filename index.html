@@ -2798,10 +2798,10 @@ function updateEquipmentAvailability() {
         rental.equipmentId === equipmentId && rental.id !== editingFutureRentalId
     );
     
-    // Get all CURRENT rentals for this equipment
-    const currentRentals = rentalList.filter(rental => 
-        rental.equipmentId === equipmentId
-    );
+    // Get all CURRENT rentals for this equipment (exclude the one being edited)
+const currentRentals = rentalList.filter(rental => 
+    rental.equipmentId === equipmentId && rental.id !== editingRentalId
+);
     
     // Calculate all booked dates from FUTURE bookings
     equipmentBookings.forEach(booking => {
