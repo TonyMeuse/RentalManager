@@ -2405,7 +2405,7 @@ function markPaid(id) {
         // FUTURE RENTALS MANAGEMENT
         // ===========================================
         
-        function addFutureRental(event) {
+     function addFutureRental(event) {
     event.preventDefault();
     const customerName = document.getElementById('futureCustomerName').value.trim();
     const equipmentId = document.getElementById('futureEquipmentSelect').value;
@@ -2429,52 +2429,17 @@ function markPaid(id) {
     
     const rentalData = { customerName, equipmentId, days, date };
     
-    if (editingFutureRentalId) {
-        // Update local array immediately for instant UI update
-        const index = futureRentals.findIndex(r => r.id === editingFutureRentalId);
-        if (index >= 0) {
-            futureRentals[index] = { ...futureRentals[index], ...rentalData };
-        }
-        
-        // Refresh views immediately
-        const calendarSection = document.getElementById('futureBookingsCalendarSection');
-        const tomorrowSection = document.getElementById('futureBookingsTomorrowSection');
-        
-        if (calendarSection && calendarSection.classList.contains('active')) {
-            renderCalendar();
-            if (selectedDate) {
-                const [year, month, day] = selectedDate.split('-').map(Number);
-                selectDate(year, month - 1, day);
-            }
-        }
-        if (tomorrowSection && tomorrowSection.classList.contains('active')) {
-            renderTomorrowBookings();
-        }
-        
-        // Now update Firebase
-        db.collection('futureRentals').doc(editingFutureRentalId).update(rentalData)
-            .then(() => {
-                resetFutureRentalForm();
-                updateSyncStatus('synced');
-            })
-            .catch(error => {
-                console.error('Error updating future rental:', error);
-                alert('Error updating booking');
-                updateSyncStatus('error');
-            });
-    } else {
-        // For new bookings, Firebase listener will handle the UI update
-        db.collection('futureRentals').add(rentalData)
-            .then(() => {
-                resetFutureRentalForm();
-                updateSyncStatus('synced');
-            })
-            .catch(error => {
-                console.error('Error adding future rental:', error);
-                alert('Error adding booking');
-                updateSyncStatus('error');
-            });
-    }
+    // Always add new booking (no update logic)
+    db.collection('futureRentals').add(rentalData)
+        .then(() => {
+            resetFutureRentalForm();
+            updateSyncStatus('synced');
+        })
+        .catch(error => {
+            console.error('Error adding future rental:', error);
+            alert('Error adding booking');
+            updateSyncStatus('error');
+        });
 }
 
        function editFutureRental(id) {
@@ -3166,14 +3131,13 @@ function updateEquipmentAvailability() {
                     const equipment = equipmentList.find(e => e.id === rental.equipmentId);
                     const totalCost = equipment ? (equipment.price * rental.days).toFixed(2) : 'N/A';
                     
-                    const row = document.createElement('tr');
+                  const row = document.createElement('tr');
                     row.innerHTML = `
                         <td data-label="Customer"><strong>${rental.customerName}</strong></td>
                         <td data-label="Equipment">${equipment ? equipment.name : '<em>Deleted</em>'}</td>
                         <td data-label="Days">${rental.days}</td>
                         <td data-label="Cost"><strong>$${totalCost}</strong></td>
                         <td class="actions">
-                            <button class="btn-secondary" onclick="editFutureRental('${rental.id}')">✏️ Edit</button>
                             <button class="btn-danger" onclick="deleteFutureRental('${rental.id}')">🗑️ Delete</button>
                             <button class="btn-success" onclick="confirmFutureRental('${rental.id}')">✓ Confirm</button>
                         </td>
@@ -3208,14 +3172,13 @@ function updateEquipmentAvailability() {
                 const equipment = equipmentList.find(e => e.id === rental.equipmentId);
                 const totalCost = equipment ? (equipment.price * rental.days).toFixed(2) : 'N/A';
                 
-                const row = document.createElement('tr');
+const row = document.createElement('tr');
                 row.innerHTML = `
                     <td data-label="Customer"><strong>${rental.customerName}</strong></td>
                     <td data-label="Equipment">${equipment ? equipment.name : '<em>Deleted</em>'}</td>
                     <td data-label="Days">${rental.days}</td>
                     <td data-label="Cost"><strong>$${totalCost}</strong></td>
                     <td class="actions">
-                        <button class="btn-secondary" onclick="editFutureRental('${rental.id}')">✏️ Edit</button>
                         <button class="btn-danger" onclick="deleteFutureRental('${rental.id}')">🗑️ Delete</button>
                         <button class="btn-success" onclick="confirmFutureRental('${rental.id}')">✓ Confirm</button>
                     </td>
