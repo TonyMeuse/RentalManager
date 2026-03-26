@@ -2078,8 +2078,8 @@ if (sectionId === 'pastRentalsSection') {
 
 // Load booking calendar when opening add booking section
 if (sectionId === 'futureBookingsAddSection') {
-    // Only reset if we're NOT in editing mode
-    if (editingFutureRentalId === null) {
+    // Only reset if we're NOT in editing mode (check BOTH editing variables)
+    if (editingFutureRentalId === null && editingRentalId === null) {
         document.getElementById('futureCustomerName').value = '';
         document.getElementById('futureEquipmentSelect').value = '';
         document.getElementById('futureRentalForm').querySelector('button[type="submit"]').innerHTML = '➕ Add Booking';
